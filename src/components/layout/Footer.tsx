@@ -1,5 +1,6 @@
 import React from "react";
-import { Layers, Github, ExternalLink, Cpu, Shield, Sparkles } from "lucide-react";
+import { Github, ExternalLink, Cpu, Shield, Sparkles } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 
 export const Footer: React.FC = () => {
   return (
@@ -9,10 +10,7 @@ export const Footer: React.FC = () => {
           {/* Brand Vision */}
           <div className="space-y-3 md:col-span-2">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                <Layers className="w-3.5 h-3.5" />
-              </div>
-              <span className="font-bold text-sm text-slate-100 font-sans tracking-tight">NeuroQuest</span>
+              <BrandLogo isDark={true} size="sm" showText={true} />
             </div>
             <p className="text-xs text-slate-400 font-sans leading-relaxed max-w-sm">
               An interactive learning platform designed to teach students Artificial Intelligence through short, engaging, hands-on learning experiences.

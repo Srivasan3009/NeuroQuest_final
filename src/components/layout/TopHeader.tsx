@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile, Course, AppTheme } from "../../types";
 import { soundFx } from "../../utils/sound";
+import { BrandLogo } from "./BrandLogo";
 
 interface TopHeaderProps {
   user: UserProfile;
@@ -108,20 +109,15 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             />
           </motion.button>
 
-          {/* Center Brand Identity */}
-          <div className="hidden md:flex items-center gap-2">
-            <motion.span
-              whileHover={{ scale: 1.05 }}
-              className={`text-xs font-black tracking-widest uppercase font-mono px-2.5 py-1 rounded-lg ${
-                isNeumorphic
-                  ? "neu-inset text-indigo-600"
-                  : isDark
-                  ? "bg-amber-400/10 text-amber-400 border border-amber-400/30"
-                  : "bg-[#EEF2FF] text-[#4F46E5] border border-[#1E1B18]"
-              }`}
-            >
-              ✦ NEUROQUEST AI
-            </motion.span>
+          {/* Center Brand Identity with Light/Dark Responsive Logo */}
+          <div className="flex items-center">
+            <BrandLogo
+              theme={theme}
+              isDark={isDark}
+              size="md"
+              showText={true}
+              className="hover:scale-105 transition-transform"
+            />
           </div>
 
           {/* Right Stats: Theme Toggle ☀️🌙, Sparks ⚡, Streak 🔥, Gift 🎁 */}

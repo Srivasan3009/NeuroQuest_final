@@ -84,7 +84,7 @@ class AudioManager {
   }
 
   // --- Tactile Haptics (Vibration API) ---
-  private triggerHaptic(pattern: number | number[]) {
+  public triggerHaptic(pattern: number | number[]) {
     if (!this.settings.hapticsEnabled || typeof window === "undefined" || !navigator.vibrate) return;
     try {
       navigator.vibrate(pattern);

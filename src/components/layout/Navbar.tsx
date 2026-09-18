@@ -11,6 +11,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { UserProfile } from "../../types";
+import { BrandLogo } from "./BrandLogo";
 
 interface NavbarProps {
   currentTab: "landing" | "journey" | "dashboard" | "playground";
@@ -34,19 +35,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div
           id="brand-logo"
           onClick={() => onTabChange("landing")}
-          className="flex items-center gap-2.5 cursor-pointer select-none group"
+          className="flex items-center gap-2 cursor-pointer select-none group hover:opacity-90 transition-opacity"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-sky-400 p-0.5 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center text-cyan-400">
-              <Layers className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-sans font-bold text-lg text-slate-100 tracking-tight">NeuroQuest</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-mono border border-cyan-500/20">
-              EDTECH
-            </span>
-          </div>
+          <BrandLogo isDark={true} size="md" showText={true} />
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 font-mono border border-cyan-500/20 ml-1">
+            EDTECH
+          </span>
         </div>
 
         {/* Center Nav Links */}
