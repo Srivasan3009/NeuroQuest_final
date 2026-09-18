@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Trophy,
@@ -114,8 +114,42 @@ export const LeagueView: React.FC<LeagueViewProps> = ({
     }
   };
 
+  // Guaranteed strict deduplication of rankings
+  const deduplicatedRankings = useMemo(() => {
+    const unique: RealLeaderboardEntry[] = [];
+    for (const r of rankings) {
+      const match = unique.find((u) => {
+        if (r.isCurrentUser && u.isCurrentUser) return true;
+        if (r.id && u.id && r.id.toLowerCase().trim() === u.id.toLowerCase().trim()) return true;
+        if (r.email && u.email && r.email.toLowerCase().trim() === u.email.toLowerCase().trim()) return true;
+
+        const u1 = (r.username || "").toLowerCase().trim();
+        const u2 = (u.username || "").toLowerCase().trim();
+        if (u1 && u2 && u1 !== "cadet" && u1 !== "you" && u1 === u2) return true;
+
+        const n1 = (r.name || "").toLowerCase().trim();
+        const n2 = (u.name || "").toLowerCase().trim();
+        if (n1 && n2 && n1 !== "cadet" && n1 !== "you" && n1 === n2) return true;
+
+        return false;
+      });
+
+      if (match) {
+        match.sparks = Math.max(match.sparks, r.sparks);
+        match.xp = Math.max(match.xp, r.xp);
+        match.level = Math.max(match.level, r.level);
+        match.questsCompletedCount = Math.max(match.questsCompletedCount, r.questsCompletedCount);
+        if (r.isCurrentUser) match.isCurrentUser = true;
+        if (!match.avatarUrl && r.avatarUrl) match.avatarUrl = r.avatarUrl;
+      } else {
+        unique.push({ ...r });
+      }
+    }
+    return unique.map((item, idx) => ({ ...item, rank: idx + 1 }));
+  }, [rankings]);
+
   // Filter rankings by search query
-  const filteredRankings = rankings.filter((r) => {
+  const filteredRankings = deduplicatedRankings.filter((r) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -125,11 +159,11 @@ export const LeagueView: React.FC<LeagueViewProps> = ({
   });
 
   // Top 3 real users for the podium
-  const top1 = rankings[0];
-  const top2 = rankings[1];
-  const top3 = rankings[2];
+  const top1 = deduplicatedRankings[0];
+  const top2 = deduplicatedRankings[1];
+  const top3 = deduplicatedRankings[2];
 
-  const currentUserEntry = rankings.find((r) => r.isCurrentUser) || {
+  const currentUserEntry = deduplicatedRankings.find((r) => r.isCurrentUser) || {
     rank: 1,
     name: user.fullName || "You",
     sparks: user.sparks ?? 0,
