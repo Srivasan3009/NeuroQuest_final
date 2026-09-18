@@ -94,13 +94,13 @@ export class LeaderboardService {
       console.warn("Could not save to local user registry", e);
     }
 
-    // 2. Sync to Supabase if configured
+    // 2. Sync to Supabase profiles table
     if (isSupabaseConfigured) {
       try {
         const payload = {
           id: userId,
           full_name: user.fullName || "Cadet",
-          username: user.username || "cadet",
+          username: user.username || (user.fullName ? user.fullName.toLowerCase().replace(/\s+/g, "_") : "cadet"),
           avatar_url: user.avatarUrl || "",
           sparks: user.sparks ?? 0,
           xp: user.xp ?? 0,
@@ -109,9 +109,13 @@ export class LeaderboardService {
           updated_at: new Date().toISOString(),
         };
 
-        await supabase
+        const { error } = await supabase
           .from("profiles")
           .upsert(payload, { onConflict: "id" });
+
+        if (error) {
+          console.warn("Supabase upsert note:", error.message || error);
+        }
       } catch (err) {
         console.info("Cloud leaderboard sync note:", err);
       }
@@ -119,7 +123,7 @@ export class LeaderboardService {
   }
 
   /**
-   * Fetch real users data strictly from Supabase and local storage registry
+   * Fetch all real user profiles strictly from Supabase and local storage registry
    */
   public async getRealRankings(
     currentUser: UserProfile,
@@ -128,13 +132,14 @@ export class LeaderboardService {
     const usersMap = new Map<string, RealLeaderboardEntry>();
     let isCloud = false;
 
-    // 1. Fetch from Supabase real profiles table if connected
+    // 1. Fetch ALL registered profiles from Supabase
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .limit(100);
+          .order("sparks", { ascending: false })
+          .limit(200);
 
         if (!error && Array.isArray(data) && data.length > 0) {
           isCloud = true;
@@ -147,7 +152,7 @@ export class LeaderboardService {
             const username = row.username || "";
             const email = row.email || "";
 
-            // Purge and skip any mock accounts that were synced previously to Supabase
+            // Purge and skip any mock accounts that were synced previously
             if (isMockCadet(rowId, name, username, email)) {
               if (row.id) {
                 void supabase.from("profiles").delete().eq("id", row.id);
@@ -158,13 +163,13 @@ export class LeaderboardService {
             const isMe =
               rowId === currentUserId ||
               rowId === currentUser.id ||
-              (row.email && row.email === currentUser.email) ||
-              (row.username && row.username === currentUser.username);
+              (currentUser.email && email && email.toLowerCase() === currentUser.email.toLowerCase()) ||
+              (currentUser.username && username && username.toLowerCase() === currentUser.username.toLowerCase());
 
             const displayName = isMe ? (currentUser.fullName || name) : name;
-            const sparks = typeof row.sparks === "number" ? row.sparks : (isMe ? (currentUser.sparks ?? 0) : 0);
-            const xp = typeof row.xp === "number" ? row.xp : (isMe ? (currentUser.xp ?? 0) : 0);
-            const level = typeof row.level === "number" ? row.level : (isMe ? (currentUser.level ?? 1) : 1);
+            const sparks = typeof row.sparks === "number" ? row.sparks : 0;
+            const xp = typeof row.xp === "number" ? row.xp : 0;
+            const level = typeof row.level === "number" ? row.level : 1;
             const questsCount = typeof row.completed_quests_count === "number"
               ? row.completed_quests_count
               : (isMe ? (currentUser.completedQuestIds || []).length : 0);
@@ -176,7 +181,7 @@ export class LeaderboardService {
               username: row.username || (isMe ? (currentUser.username || "you") : "cadet"),
               avatarUrl: isMe ? currentUser.avatarUrl : (row.avatar_url || row.avatarUrl),
               avatarLetter: (displayName.charAt(0) || "C").toUpperCase(),
-              tier: calculateTier(level, sparks),
+              tier: calculateTier(level, isMe ? Math.max(currentUser.sparks ?? 0, sparks) : sparks),
               sparks: isMe ? Math.max(currentUser.sparks ?? 0, sparks) : sparks,
               xp: isMe ? Math.max(currentUser.xp ?? 0, xp) : xp,
               level: isMe ? Math.max(currentUser.level ?? 1, level) : level,
@@ -191,7 +196,7 @@ export class LeaderboardService {
       }
     }
 
-    // 2. Read other registered local/session accounts from local storage registry
+    // 2. Read registered local/session accounts to include any additional users
     try {
       const raw = localStorage.getItem(LOCAL_USERS_REGISTRY_KEY);
       if (raw) {
@@ -200,58 +205,90 @@ export class LeaderboardService {
           if (!userRecord || !id) continue;
           if (isMockCadet(id, userRecord.fullName, userRecord.username, userRecord.email)) continue;
 
-          const isMe = id === currentUser.id || userRecord.email === currentUser.email;
+          const isMe =
+            id === currentUser.id ||
+            id === currentUser.email ||
+            (currentUser.email && userRecord.email && userRecord.email.toLowerCase() === currentUser.email.toLowerCase());
+
+          const existingEntry = usersMap.get(id);
           const currentName = currentUser.fullName || currentUser.username || "You";
           const name = userRecord.fullName || userRecord.username || (isMe ? currentName : "Cadet");
-          const sparks = isMe ? (currentUser.sparks ?? 0) : (userRecord.sparks ?? 0);
-          const xp = isMe ? (currentUser.xp ?? 0) : (userRecord.xp ?? 0);
-          const level = isMe ? (currentUser.level ?? 1) : (userRecord.level ?? 1);
+          const sparks = isMe ? Math.max(currentUser.sparks ?? 0, userRecord.sparks ?? 0) : (userRecord.sparks ?? 0);
+          const xp = isMe ? Math.max(currentUser.xp ?? 0, userRecord.xp ?? 0) : (userRecord.xp ?? 0);
+          const level = isMe ? Math.max(currentUser.level ?? 1, userRecord.level ?? 1) : (userRecord.level ?? 1);
           const questsCount = isMe
-            ? (currentUser.completedQuestIds || []).length
+            ? Math.max((currentUser.completedQuestIds || []).length, (userRecord.completedQuestIds || []).length)
             : (userRecord.completedQuestIds || []).length;
 
-          usersMap.set(id, {
-            id,
-            rank: 0,
-            name: isMe ? currentName : name,
-            username: userRecord.username || (isMe ? (currentUser.username || "you") : "cadet"),
-            avatarUrl: isMe ? currentUser.avatarUrl : userRecord.avatarUrl,
-            avatarLetter: (name.charAt(0) || "C").toUpperCase(),
-            tier: calculateTier(level, sparks),
-            sparks,
-            xp,
-            level,
-            questsCompletedCount: questsCount,
-            isCurrentUser: isMe,
-            lastActive: userRecord.lastActiveDate || "Recently",
-          });
+          // If entry already exists from Supabase, preserve highest recorded points
+          if (existingEntry) {
+            existingEntry.sparks = Math.max(existingEntry.sparks, sparks);
+            existingEntry.xp = Math.max(existingEntry.xp, xp);
+            existingEntry.level = Math.max(existingEntry.level, level);
+            existingEntry.questsCompletedCount = Math.max(existingEntry.questsCompletedCount, questsCount);
+            if (isMe) existingEntry.isCurrentUser = true;
+          } else {
+            usersMap.set(id, {
+              id,
+              rank: 0,
+              name: isMe ? currentName : name,
+              username: userRecord.username || (isMe ? (currentUser.username || "you") : "cadet"),
+              avatarUrl: isMe ? currentUser.avatarUrl : userRecord.avatarUrl,
+              avatarLetter: (name.charAt(0) || "C").toUpperCase(),
+              tier: calculateTier(level, sparks),
+              sparks,
+              xp,
+              level,
+              questsCompletedCount: questsCount,
+              isCurrentUser: isMe,
+              lastActive: userRecord.lastActiveDate || "Recently",
+            });
+          }
         }
       }
     } catch {
       // Ignore
     }
 
-    // 3. Always set/overwrite active user's current live stats so their real progress is reflected
+    // 3. Ensure current active user is always represented with their live session stats
     if (!isMockCadet(currentUser.id, currentUser.fullName, currentUser.username, currentUser.email)) {
       const currentUserId = currentUser.id || currentUser.email || `cadet_${currentUser.username || "me"}`;
       const currentName = currentUser.fullName || currentUser.username || "You";
-      const currentTier = calculateTier(currentUser.level || 1, currentUser.sparks || 0);
+      const currentSparks = currentUser.sparks ?? 0;
+      const currentXP = currentUser.xp ?? 0;
+      const currentLevel = currentUser.level ?? 1;
+      const currentTier = calculateTier(currentLevel, currentSparks);
 
-      usersMap.set(currentUserId, {
-        id: currentUserId,
-        rank: 0,
-        name: currentName,
-        username: currentUser.username || "you",
-        avatarUrl: currentUser.avatarUrl,
-        avatarLetter: (currentName.charAt(0) || "Y").toUpperCase(),
-        tier: currentTier,
-        sparks: currentUser.sparks ?? 0,
-        xp: currentUser.xp ?? 0,
-        level: currentUser.level ?? 1,
-        questsCompletedCount: (currentUser.completedQuestIds || []).length,
-        isCurrentUser: true,
-        lastActive: "Just now",
-      });
+      const existingMe = usersMap.get(currentUserId) || Array.from(usersMap.values()).find(e => e.isCurrentUser);
+
+      if (existingMe) {
+        existingMe.name = currentName;
+        existingMe.sparks = Math.max(existingMe.sparks, currentSparks);
+        existingMe.xp = Math.max(existingMe.xp, currentXP);
+        existingMe.level = Math.max(existingMe.level, currentLevel);
+        existingMe.questsCompletedCount = Math.max(
+          existingMe.questsCompletedCount,
+          (currentUser.completedQuestIds || []).length
+        );
+        existingMe.tier = calculateTier(existingMe.level, existingMe.sparks);
+        existingMe.isCurrentUser = true;
+      } else {
+        usersMap.set(currentUserId, {
+          id: currentUserId,
+          rank: 0,
+          name: currentName,
+          username: currentUser.username || "you",
+          avatarUrl: currentUser.avatarUrl,
+          avatarLetter: (currentName.charAt(0) || "Y").toUpperCase(),
+          tier: currentTier,
+          sparks: currentSparks,
+          xp: currentXP,
+          level: currentLevel,
+          questsCompletedCount: (currentUser.completedQuestIds || []).length,
+          isCurrentUser: true,
+          lastActive: "Just now",
+        });
+      }
     }
 
     // 5. Sort entries strictly by selected metric
