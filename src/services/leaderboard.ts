@@ -26,6 +26,23 @@ export function calculateTier(level: number, sparks: number): "DIAMOND" | "PLATI
 
 const LOCAL_USERS_REGISTRY_KEY = "neuroquest_registered_users_registry_v1";
 
+const DISALLOWED_MOCK_HANDLES = new Set([
+  "alexchen",
+  "alex.chen",
+  "alex_chen",
+  "alex chen",
+  "alex.learner@neuroquest.edu",
+  "learner-usr-101",
+]);
+
+function isMockCadet(id?: string, name?: string, username?: string, email?: string): boolean {
+  if (id && DISALLOWED_MOCK_HANDLES.has(id.toLowerCase())) return true;
+  if (name && DISALLOWED_MOCK_HANDLES.has(name.toLowerCase())) return true;
+  if (username && DISALLOWED_MOCK_HANDLES.has(username.toLowerCase())) return true;
+  if (email && DISALLOWED_MOCK_HANDLES.has(email.toLowerCase())) return true;
+  return false;
+}
+
 export class LeaderboardService {
   private static instance: LeaderboardService;
 
@@ -43,6 +60,7 @@ export class LeaderboardService {
    */
   public async syncUserStats(user: UserProfile): Promise<void> {
     if (!user) return;
+    if (isMockCadet(user.id, user.fullName, user.username, user.email)) return;
 
     const userId = user.id || user.email || `cadet_${user.username || "me"}`;
 
@@ -50,6 +68,13 @@ export class LeaderboardService {
     try {
       const raw = localStorage.getItem(LOCAL_USERS_REGISTRY_KEY);
       const registry: Record<string, Partial<UserProfile>> = raw ? JSON.parse(raw) : {};
+
+      // Filter out any mock accounts from registry
+      for (const k of Object.keys(registry)) {
+        if (isMockCadet(k, registry[k]?.fullName, registry[k]?.username, registry[k]?.email)) {
+          delete registry[k];
+        }
+      }
 
       registry[userId] = {
         id: userId,
@@ -118,13 +143,25 @@ export class LeaderboardService {
           for (const row of data) {
             if (!row) continue;
             const rowId = String(row.id || row.user_id || `user_${Math.random()}`);
+            const name = row.full_name || row.name || row.username || "Cadet";
+            const username = row.username || "";
+            const email = row.email || "";
+
+            // Purge and skip any mock accounts that were synced previously to Supabase
+            if (isMockCadet(rowId, name, username, email)) {
+              if (row.id) {
+                void supabase.from("profiles").delete().eq("id", row.id);
+              }
+              continue;
+            }
+
             const isMe =
               rowId === currentUserId ||
               rowId === currentUser.id ||
               (row.email && row.email === currentUser.email) ||
               (row.username && row.username === currentUser.username);
 
-            const name = row.full_name || row.name || row.username || (isMe ? (currentUser.fullName || "You") : "Cadet");
+            const displayName = isMe ? (currentUser.fullName || name) : name;
             const sparks = typeof row.sparks === "number" ? row.sparks : (isMe ? (currentUser.sparks ?? 0) : 0);
             const xp = typeof row.xp === "number" ? row.xp : (isMe ? (currentUser.xp ?? 0) : 0);
             const level = typeof row.level === "number" ? row.level : (isMe ? (currentUser.level ?? 1) : 1);
@@ -135,10 +172,10 @@ export class LeaderboardService {
             usersMap.set(rowId, {
               id: rowId,
               rank: 0,
-              name: isMe ? (currentUser.fullName || name) : name,
+              name: displayName,
               username: row.username || (isMe ? (currentUser.username || "you") : "cadet"),
               avatarUrl: isMe ? currentUser.avatarUrl : (row.avatar_url || row.avatarUrl),
-              avatarLetter: (name.charAt(0) || "C").toUpperCase(),
+              avatarLetter: (displayName.charAt(0) || "C").toUpperCase(),
               tier: calculateTier(level, sparks),
               sparks: isMe ? Math.max(currentUser.sparks ?? 0, sparks) : sparks,
               xp: isMe ? Math.max(currentUser.xp ?? 0, xp) : xp,
@@ -154,15 +191,16 @@ export class LeaderboardService {
       }
     }
 
-    // 3. Read other registered local/session accounts from local storage registry
+    // 2. Read other registered local/session accounts from local storage registry
     try {
       const raw = localStorage.getItem(LOCAL_USERS_REGISTRY_KEY);
       if (raw) {
         const registry: Record<string, Partial<UserProfile>> = JSON.parse(raw);
         for (const [id, userRecord] of Object.entries(registry)) {
           if (!userRecord || !id) continue;
-          const isMe = id === currentUser.id || userRecord.email === currentUser.email;
+          if (isMockCadet(id, userRecord.fullName, userRecord.username, userRecord.email)) continue;
 
+          const isMe = id === currentUser.id || userRecord.email === currentUser.email;
           const currentName = currentUser.fullName || currentUser.username || "You";
           const name = userRecord.fullName || userRecord.username || (isMe ? currentName : "Cadet");
           const sparks = isMe ? (currentUser.sparks ?? 0) : (userRecord.sparks ?? 0);
@@ -193,26 +231,28 @@ export class LeaderboardService {
       // Ignore
     }
 
-    // 4. Always set/overwrite active user's current live stats so their real progress is reflected
-    const currentUserId = currentUser.id || currentUser.email || `cadet_${currentUser.username || "me"}`;
-    const currentName = currentUser.fullName || currentUser.username || "You";
-    const currentTier = calculateTier(currentUser.level || 1, currentUser.sparks || 0);
+    // 3. Always set/overwrite active user's current live stats so their real progress is reflected
+    if (!isMockCadet(currentUser.id, currentUser.fullName, currentUser.username, currentUser.email)) {
+      const currentUserId = currentUser.id || currentUser.email || `cadet_${currentUser.username || "me"}`;
+      const currentName = currentUser.fullName || currentUser.username || "You";
+      const currentTier = calculateTier(currentUser.level || 1, currentUser.sparks || 0);
 
-    usersMap.set(currentUserId, {
-      id: currentUserId,
-      rank: 0,
-      name: currentName,
-      username: currentUser.username || "you",
-      avatarUrl: currentUser.avatarUrl,
-      avatarLetter: (currentName.charAt(0) || "Y").toUpperCase(),
-      tier: currentTier,
-      sparks: currentUser.sparks ?? 0,
-      xp: currentUser.xp ?? 0,
-      level: currentUser.level ?? 1,
-      questsCompletedCount: (currentUser.completedQuestIds || []).length,
-      isCurrentUser: true,
-      lastActive: "Just now",
-    });
+      usersMap.set(currentUserId, {
+        id: currentUserId,
+        rank: 0,
+        name: currentName,
+        username: currentUser.username || "you",
+        avatarUrl: currentUser.avatarUrl,
+        avatarLetter: (currentName.charAt(0) || "Y").toUpperCase(),
+        tier: currentTier,
+        sparks: currentUser.sparks ?? 0,
+        xp: currentUser.xp ?? 0,
+        level: currentUser.level ?? 1,
+        questsCompletedCount: (currentUser.completedQuestIds || []).length,
+        isCurrentUser: true,
+        lastActive: "Just now",
+      });
+    }
 
     // 5. Sort entries strictly by selected metric
     const list = Array.from(usersMap.values());
