@@ -68,7 +68,16 @@ export const LeagueView: React.FC<LeagueViewProps> = ({
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [user, sortBy]);
+  }, [
+    user.id,
+    user.sparks,
+    user.xp,
+    user.level,
+    (user.completedQuestIds || []).length,
+    user.fullName,
+    user.username,
+    sortBy,
+  ]);
 
   useEffect(() => {
     loadRealLeaderboard();
@@ -185,12 +194,18 @@ export const LeagueView: React.FC<LeagueViewProps> = ({
 
       {/* Header */}
       <div className="text-center space-y-1">
-        <div
-          className={`text-[10px] font-mono uppercase tracking-widest font-bold ${
-            isNeumorphic ? "text-[#4F46E5]" : isDark ? "text-amber-400" : "text-[#4F46E5]"
-          }`}
-        >
-          GLOBAL CADET LEAGUE
+        <div className="flex items-center justify-center gap-2">
+          <div
+            className={`text-[10px] font-mono uppercase tracking-widest font-bold ${
+              isNeumorphic ? "text-[#4F46E5]" : isDark ? "text-amber-400" : "text-[#4F46E5]"
+            }`}
+          >
+            GLOBAL CADET LEAGUE
+          </div>
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{isCloudSource ? "Cloud Live Synced" : "Global Live League"}</span>
+          </div>
         </div>
         <h1
           className={`text-2xl sm:text-3xl font-black tracking-tight uppercase ${
@@ -606,38 +621,53 @@ export const LeagueView: React.FC<LeagueViewProps> = ({
             {filteredRankings.map((r) => (
               <div
                 key={r.id || r.rank}
-                className={`px-4 py-3 flex items-center justify-between gap-3 transition-colors ${
+                className={`px-4 py-3 flex items-center justify-between gap-3 transition-all relative ${
                   r.isCurrentUser
                     ? isDark
-                      ? "bg-amber-400/10 hover:bg-amber-400/15"
-                      : "bg-[#FEF9C3] hover:bg-[#FEF08A]"
+                      ? "bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-transparent border-l-4 border-l-amber-400 shadow-[inset_0_0_12px_rgba(245,158,11,0.15)]"
+                      : isNeumorphic
+                      ? "bg-amber-100/90 border-l-4 border-l-amber-500 shadow-sm"
+                      : "bg-[#FEF08A] border-l-4 border-l-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
                     : isNeumorphic
                     ? "hover:bg-slate-200/50"
                     : "hover:bg-slate-800/30"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    className={`w-6 text-sm font-black font-mono shrink-0 ${
-                      r.rank === 1
-                        ? "text-amber-500"
-                        : r.rank === 2
-                        ? "text-slate-400"
-                        : r.rank === 3
-                        ? "text-amber-700"
-                        : isNeumorphic
-                        ? "text-slate-600"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    #{r.rank}
-                  </span>
+                  {/* Rank Badge Column */}
+                  <div className="shrink-0 min-w-[90px] sm:min-w-[105px] flex items-center">
+                    {r.rank === 1 ? (
+                      <div className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-zinc-950 shadow-[0_0_10px_rgba(245,158,11,0.4)] flex items-center gap-1">
+                        <Crown className="w-3 h-3 fill-zinc-950 shrink-0" />
+                        <span>#1 Champion</span>
+                      </div>
+                    ) : r.rank === 2 ? (
+                      <div className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase bg-gradient-to-r from-slate-200 via-slate-300 to-slate-400 text-slate-950 shadow-sm flex items-center gap-1">
+                        <Medal className="w-3 h-3 text-slate-900 shrink-0" />
+                        <span>#2 Runner-Up</span>
+                      </div>
+                    ) : r.rank === 3 ? (
+                      <div className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase bg-gradient-to-r from-amber-700 via-amber-600 to-amber-800 text-amber-100 shadow-sm flex items-center gap-1">
+                        <Award className="w-3 h-3 text-amber-100 shrink-0" />
+                        <span>#3 Bronze</span>
+                      </div>
+                    ) : (
+                      <span
+                        className={`text-xs font-black font-mono px-2 py-0.5 rounded ${
+                          isNeumorphic ? "text-slate-600" : "text-slate-400"
+                        }`}
+                      >
+                        #{r.rank}
+                      </span>
+                    )}
+                  </div>
 
+                  {/* Avatar */}
                   <div className="relative shrink-0">
                     <div
                       className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold ${
                         r.isCurrentUser
-                          ? "bg-amber-500 text-zinc-950 font-black border-2 border-amber-400"
+                          ? "bg-amber-500 text-zinc-950 font-black border-2 border-amber-400 ring-2 ring-amber-400/60 ring-offset-1 ring-offset-zinc-900"
                           : isNeumorphic
                           ? "neu-inset text-slate-700"
                           : "bg-slate-800 border border-slate-700 text-slate-200"
@@ -655,8 +685,14 @@ export const LeagueView: React.FC<LeagueViewProps> = ({
                         r.avatarLetter
                       )}
                     </div>
+                    {r.isCurrentUser && (
+                      <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-zinc-950 flex items-center justify-center shadow-sm">
+                        <Sparkles className="w-2 h-2 text-zinc-950 fill-zinc-950" />
+                      </span>
+                    )}
                   </div>
 
+                  {/* Name and Metadata */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span
@@ -671,7 +707,8 @@ export const LeagueView: React.FC<LeagueViewProps> = ({
                         {r.name}
                       </span>
                       {r.isCurrentUser && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-black uppercase bg-amber-400 text-zinc-950">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-black uppercase bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 shadow-[0_0_10px_rgba(251,191,36,0.4)] flex items-center gap-1 shrink-0">
+                          <Sparkles className="w-2.5 h-2.5 fill-zinc-950 shrink-0" />
                           YOU
                         </span>
                       )}

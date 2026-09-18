@@ -73,208 +73,10 @@ const STORAGE_FEED_KEY = "neuroquest_social_feed_v1";
 const STORAGE_PARTY_MESSAGES_KEY = "neuroquest_social_party_messages_v1";
 
 // Initial community members & fellow cadets
-const INITIAL_CADETS: FriendUser[] = [
-  {
-    id: "cadet-elena",
-    name: "Elena Rostova",
-    username: "elena_ai",
-    avatarLetter: "E",
-    level: 7,
-    sparks: 1420,
-    xp: 3850,
-    status: "in_quest",
-    activeQuestTitle: "Vision Transformers & Attention Heads",
-    streakDays: 14,
-    lastActive: "Just now",
-    isMutual: true,
-    role: "Neural Architect",
-  },
-  {
-    id: "cadet-marcus",
-    name: "Marcus Vance",
-    username: "marcus_v",
-    avatarLetter: "M",
-    level: 5,
-    sparks: 980,
-    xp: 2400,
-    status: "online",
-    activeQuestTitle: "Prompt Injection Defense & Guardrails",
-    streakDays: 9,
-    lastActive: "2m ago",
-    isMutual: true,
-    role: "Security Engineer",
-  },
-  {
-    id: "cadet-sophia",
-    name: "Sophia Chen",
-    username: "sophia_ml",
-    avatarLetter: "S",
-    level: 6,
-    sparks: 1150,
-    xp: 3100,
-    status: "studying",
-    activeQuestTitle: "RAG Chunking Strategies",
-    streakDays: 12,
-    lastActive: "5m ago",
-    isMutual: true,
-    role: "Knowledge Engineer",
-  },
-  {
-    id: "cadet-tariq",
-    name: "Tariq Al-Mansoor",
-    username: "tariq_dev",
-    avatarLetter: "T",
-    level: 4,
-    sparks: 650,
-    xp: 1600,
-    status: "idle",
-    activeQuestTitle: "Tokenization Demystified",
-    streakDays: 4,
-    lastActive: "1h ago",
-    isMutual: false,
-    role: "Full-Stack Cadet",
-  },
-  {
-    id: "cadet-anya",
-    name: "Anya Sharma",
-    username: "anya_neuro",
-    avatarLetter: "A",
-    level: 8,
-    sparks: 2100,
-    xp: 5200,
-    status: "online",
-    activeQuestTitle: "Agentic Tool Calling Sandbox",
-    streakDays: 21,
-    lastActive: "Just now",
-    isMutual: false,
-    role: "Autonomous Agent Lead",
-  },
-];
-
-const INITIAL_FEED_ITEMS: ActivityFeedItem[] = [
-  {
-    id: "feed-1",
-    userId: "cadet-elena",
-    userName: "Elena Rostova",
-    userLetter: "E",
-    type: "quest_complete",
-    title: "Conquered 'Multi-Head Attention Visualizer'",
-    description: "Elena earned +120 XP and unlocked the Self-Attention Matrix mastery.",
-    timestamp: "12m ago",
-    xpAwarded: 120,
-    sparksAwarded: 15,
-    clapsCount: 8,
-    hasClapped: false,
-    sharedPayload: {
-      stageName: "Multi-Modal & Transformer Architectures",
-    },
-  },
-  {
-    id: "feed-2",
-    userId: "cadet-sophia",
-    userName: "Sophia Chen",
-    userLetter: "S",
-    type: "streak_milestone",
-    title: "Reached a 12-Day Neural Streak 🔥",
-    description: "Daily consistency multiplier activated! Learning speed +15%.",
-    timestamp: "45m ago",
-    clapsCount: 14,
-    hasClapped: false,
-  },
-  {
-    id: "feed-3",
-    userId: "cadet-marcus",
-    userName: "Marcus Vance",
-    userLetter: "M",
-    type: "prompt_shared",
-    title: "Shared a System Prompt Framework",
-    description: "Zero-Shot Chain of Thought template for robust mathematical evaluation.",
-    timestamp: "2h ago",
-    clapsCount: 19,
-    hasClapped: true,
-    sharedPayload: {
-      promptSnippet: "You are a verification engine. Before answering, trace three independent logical derivations...",
-    },
-  },
-  {
-    id: "feed-4",
-    userId: "cadet-anya",
-    userName: "Anya Sharma",
-    userLetter: "A",
-    type: "level_up",
-    title: "Ranked up to Level 8: Autonomous Agent Lead",
-    description: "Unlocked Agent Execution Playground & Custom Tool Integration permissions.",
-    timestamp: "3h ago",
-    xpAwarded: 500,
-    clapsCount: 27,
-    hasClapped: true,
-  },
-];
-
-const INITIAL_PARTY_MESSAGES: StudyPartyMessage[] = [
-  {
-    id: "msg-1",
-    userId: "cadet-elena",
-    userName: "Elena Rostova",
-    userLetter: "E",
-    text: "Working through the attention heads quest! The interactive vector matrix was super intuitive.",
-    timestamp: "15m ago",
-    type: "chat",
-  },
-  {
-    id: "msg-2",
-    userId: "cadet-sophia",
-    userName: "Sophia Chen",
-    userLetter: "S",
-    text: "Keep crushing it everyone! Let's get our squad to Diamond tier this sprint.",
-    timestamp: "8m ago",
-    type: "shoutout",
-  },
-  {
-    id: "msg-3",
-    userId: "cadet-marcus",
-    userName: "Marcus Vance",
-    userLetter: "M",
-    text: "Tip: For the boss challenge, check the cosine similarity threshold before submitting.",
-    timestamp: "2m ago",
-    type: "chat",
-  },
-];
-
-const INITIAL_FRIEND_REQUESTS: FriendRequest[] = [
-  {
-    id: "req-tariq",
-    fromUserId: "cadet-tariq",
-    fromUserName: "Tariq Al-Mansoor",
-    fromUsername: "tariq_dev",
-    fromAvatarLetter: "T",
-    fromLevel: 4,
-    fromRole: "Full-Stack Cadet",
-    toUserId: "you",
-    toUserName: "You",
-    toUsername: "cadet_current",
-    timestamp: "10m ago",
-    status: "pending",
-    direction: "incoming",
-    note: "Hey! Want to team up on the Tokenization and Vector Matrix quests?",
-  },
-  {
-    id: "req-anya",
-    fromUserId: "cadet-anya",
-    fromUserName: "Anya Sharma",
-    fromUsername: "anya_neuro",
-    fromAvatarLetter: "A",
-    fromLevel: 8,
-    fromRole: "Autonomous Agent Lead",
-    toUserId: "you",
-    toUserName: "You",
-    toUsername: "cadet_current",
-    timestamp: "1h ago",
-    status: "pending",
-    direction: "incoming",
-    note: "Looking for collaborative research partners in Agent Tool Calling.",
-  },
-];
+const INITIAL_CADETS: FriendUser[] = [];
+const INITIAL_FEED_ITEMS: ActivityFeedItem[] = [];
+const INITIAL_PARTY_MESSAGES: StudyPartyMessage[] = [];
+const INITIAL_FRIEND_REQUESTS: FriendRequest[] = [];
 
 export class SocialService {
   private static instance: SocialService;
@@ -304,16 +106,16 @@ export class SocialService {
     if (typeof window === "undefined") return;
     try {
       if (!localStorage.getItem(STORAGE_FRIENDS_KEY)) {
-        localStorage.setItem(STORAGE_FRIENDS_KEY, JSON.stringify(INITIAL_CADETS));
+        localStorage.setItem(STORAGE_FRIENDS_KEY, JSON.stringify([]));
       }
       if (!localStorage.getItem(STORAGE_FEED_KEY)) {
-        localStorage.setItem(STORAGE_FEED_KEY, JSON.stringify(INITIAL_FEED_ITEMS));
+        localStorage.setItem(STORAGE_FEED_KEY, JSON.stringify([]));
       }
       if (!localStorage.getItem(STORAGE_PARTY_MESSAGES_KEY)) {
-        localStorage.setItem(STORAGE_PARTY_MESSAGES_KEY, JSON.stringify(INITIAL_PARTY_MESSAGES));
+        localStorage.setItem(STORAGE_PARTY_MESSAGES_KEY, JSON.stringify([]));
       }
       if (!localStorage.getItem(STORAGE_REQUESTS_KEY)) {
-        localStorage.setItem(STORAGE_REQUESTS_KEY, JSON.stringify(INITIAL_FRIEND_REQUESTS));
+        localStorage.setItem(STORAGE_REQUESTS_KEY, JSON.stringify([]));
       }
     } catch {
       // Ignore

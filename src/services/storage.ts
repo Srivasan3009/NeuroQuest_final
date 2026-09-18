@@ -49,7 +49,7 @@ class StorageAdapter implements IDataStore {
         this.inMemoryProfile = {
           ...INITIAL_PROFILE,
           ...parsed,
-          sparks: typeof parsed.sparks === "number" ? parsed.sparks : 45,
+          sparks: typeof parsed.sparks === "number" ? parsed.sparks : 0,
           openedChests: Array.isArray(parsed.openedChests) ? parsed.openedChests : [],
           mascotRole: parsed.mascotRole || "detective",
           isPlus: Boolean(parsed.isPlus),

@@ -78,16 +78,16 @@ export const INITIAL_SKILLS: SkillMastery[] = [
 ];
 
 export const INITIAL_PROFILE: UserProfile = {
-  id: "learner-usr-101",
-  email: "alex.learner@neuroquest.edu",
-  fullName: "Alex Chen",
-  username: "alexchen",
-  age: 21,
-  avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+  id: "guest-cadet",
+  email: "",
+  fullName: "Cadet",
+  username: "cadet",
+  age: 20,
+  avatarUrl: "",
   level: 1,
-  xp: 80,
-  sparks: 45,
-  streakDays: 4,
+  xp: 0,
+  sparks: 0,
+  streakDays: 1,
   lastActiveDate: new Date().toISOString().split("T")[0],
   currentStageId: "ai-foundations",
   completedQuestIds: [],
@@ -99,7 +99,7 @@ export const INITIAL_PROFILE: UserProfile = {
   questScores: {},
   skills: INITIAL_SKILLS,
   achievements: INITIAL_ACHIEVEMENTS,
-  joinedDate: "October 2026",
+  joinedDate: "Recently",
   authProvider: "guest"
 };
 

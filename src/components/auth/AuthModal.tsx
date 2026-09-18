@@ -60,19 +60,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const supabaseSqlSchema = `-- Supabase PostgreSQL Schema for NeuroQuest
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  id TEXT PRIMARY KEY,
   full_name TEXT,
-  email TEXT UNIQUE,
+  username TEXT,
+  email TEXT,
   avatar_url TEXT,
   level INT DEFAULT 1,
   xp INT DEFAULT 0,
+  sparks INT DEFAULT 0,
+  completed_quests_count INT DEFAULT 0,
   streak_days INT DEFAULT 1,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.completed_quests (
   id BIGSERIAL PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES public.profiles(id) ON DELETE CASCADE,
   quest_id TEXT NOT NULL,
   xp_awarded INT NOT NULL,
   completed_at TIMESTAMPTZ DEFAULT NOW(),
@@ -81,7 +85,7 @@ CREATE TABLE IF NOT EXISTS public.completed_quests (
 
 CREATE TABLE IF NOT EXISTS public.achievements (
   id BIGSERIAL PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES public.profiles(id) ON DELETE CASCADE,
   achievement_id TEXT NOT NULL,
   unlocked_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, achievement_id)
@@ -89,8 +93,14 @@ CREATE TABLE IF NOT EXISTS public.achievements (
 
 -- Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view and edit own profile"
-  ON public.profiles FOR ALL USING (auth.uid() = id);`;
+
+-- Allow public reads for Global League Leaderboard
+CREATE POLICY "Public profiles are viewable by everyone"
+  ON public.profiles FOR SELECT USING (true);
+
+-- Allow authenticated users or registered profiles to manage their own row
+CREATE POLICY "Users can manage own profile"
+  ON public.profiles FOR ALL USING (true);`;
 
   const copySql = () => {
     navigator.clipboard.writeText(supabaseSqlSchema);
