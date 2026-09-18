@@ -137,26 +137,26 @@ export class LeaderboardService {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, full_name, name, username, email, avatar_url, sparks, xp, level, completed_quests_count, updated_at, created_at")
           .order("sparks", { ascending: false })
-          .limit(200);
+          .limit(500);
 
-        if (!error && Array.isArray(data) && data.length > 0) {
+        if (error) {
+          console.warn("Supabase profiles query returned error:", error.message || error);
+        } else if (Array.isArray(data)) {
           isCloud = true;
           const currentUserId = currentUser.id || currentUser.email || `cadet_${currentUser.username || "me"}`;
 
           for (const row of data) {
-            if (!row) continue;
-            const rowId = String(row.id || row.user_id || `user_${Math.random()}`);
+            if (!row || !row.id) continue;
+            const rowId = String(row.id);
             const name = row.full_name || row.name || row.username || "Cadet";
             const username = row.username || "";
             const email = row.email || "";
 
             // Purge and skip any mock accounts that were synced previously
             if (isMockCadet(rowId, name, username, email)) {
-              if (row.id) {
-                void supabase.from("profiles").delete().eq("id", row.id);
-              }
+              void supabase.from("profiles").delete().eq("id", rowId);
               continue;
             }
 
@@ -179,7 +179,7 @@ export class LeaderboardService {
               rank: 0,
               name: displayName,
               username: row.username || (isMe ? (currentUser.username || "you") : "cadet"),
-              avatarUrl: isMe ? currentUser.avatarUrl : (row.avatar_url || row.avatarUrl),
+              avatarUrl: isMe ? currentUser.avatarUrl : (row.avatar_url || ""),
               avatarLetter: (displayName.charAt(0) || "C").toUpperCase(),
               tier: calculateTier(level, isMe ? Math.max(currentUser.sparks ?? 0, sparks) : sparks),
               sparks: isMe ? Math.max(currentUser.sparks ?? 0, sparks) : sparks,
@@ -187,7 +187,7 @@ export class LeaderboardService {
               level: isMe ? Math.max(currentUser.level ?? 1, level) : level,
               questsCompletedCount: isMe ? Math.max((currentUser.completedQuestIds || []).length, questsCount) : questsCount,
               isCurrentUser: isMe,
-              lastActive: row.updated_at || row.last_active || "Recently",
+              lastActive: row.updated_at || row.created_at || "Recently",
             });
           }
         }
