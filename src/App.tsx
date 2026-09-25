@@ -127,8 +127,50 @@ export default function App() {
       }
     });
 
+    // Cross-tab / Popup communication via BroadcastChannel
+    let authChannel: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== "undefined") {
+        authChannel = new BroadcastChannel("neuroquest_auth_channel");
+        authChannel.onmessage = (event) => {
+          if (event.data?.type === "NEUROQUEST_AUTH_CALLBACK_SUCCESS" && event.data?.user) {
+            handleLoginSuccess(event.data.user);
+          }
+        };
+      }
+    } catch (err) {
+      console.warn("BroadcastChannel initialization warning:", err);
+    }
+
+    // Cross-window postMessage listener
+    const handlePostMessage = (event: MessageEvent) => {
+      if (event.data?.type === "NEUROQUEST_AUTH_CALLBACK_SUCCESS" && event.data?.user) {
+        handleLoginSuccess(event.data.user);
+      }
+    };
+    window.addEventListener("message", handlePostMessage);
+
+    // Cross-tab storage listener
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "neuroquest_auth_active" && e.newValue === "true") {
+        dataStore.getUserProfile().then((p) => {
+          if (p) handleLoginSuccess(p);
+        });
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
       unsubscribe();
+      if (authChannel) {
+        try {
+          authChannel.close();
+        } catch {
+          // Ignore
+        }
+      }
+      window.removeEventListener("message", handlePostMessage);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
@@ -276,7 +318,7 @@ export default function App() {
 
   // If this window is the Google OAuth popup / callback tab, render the compact login completion screen
   if (isOAuthCallbackWindow()) {
-    return <OAuthCallbackHandler onCompleteStandalone={handleLoginSuccess} />;
+    return <OAuthCallbackHandler />;
   }
 
   if (!user) {

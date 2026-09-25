@@ -225,6 +225,7 @@ export const Achievements: React.FC<AchievementsProps> = ({
 
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
+              id="test-bench-week-streak"
               onClick={() => handleTestStreak(7)}
               className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
                 user.streakDays >= 7
@@ -236,12 +237,59 @@ export const Achievements: React.FC<AchievementsProps> = ({
             >
               <span className="flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5 text-amber-500" />
-                <span>7-Day Streak</span>
+                <span>Week Streak</span>
               </span>
-              <span className="text-[10px]">{user.streakDays >= 7 ? "✓ Active" : "Set 7d"}</span>
+              <span className="text-[10px]">{user.streakDays >= 7 ? "✓ 7d Active" : "Set 7d"}</span>
             </button>
 
             <button
+              id="test-bench-first-quest"
+              onClick={handleTestFoundation}
+              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
+                (user.completedQuestIds || []).length >= 1
+                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                  : isDark
+                  ? "bg-[#27272A] border-zinc-700 hover:border-indigo-400"
+                  : "bg-white border-[#1E1B18] hover:bg-[#EEF2FF]"
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-indigo-500" />
+                <span>First Quest</span>
+              </span>
+              <span className="text-[10px]">
+                {(user.completedQuestIds || []).length >= 1 ? "✓ Unlocked" : "+ Complete"}
+              </span>
+            </button>
+
+            <button
+              id="test-bench-neural-explorer"
+              onClick={() => {
+                if (onCompleteFoundationQuest) {
+                  onCompleteFoundationQuest();
+                }
+              }}
+              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
+                (user.completedQuestIds || []).some(id => id.includes("neural") || id === "quest-3") || (user.completedQuestIds || []).length >= 2
+                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                  : isDark
+                  ? "bg-[#27272A] border-zinc-700 hover:border-purple-400"
+                  : "bg-white border-[#1E1B18] hover:bg-[#EEF2FF]"
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <Network className="w-3.5 h-3.5 text-purple-400" />
+                <span>Neural Explorer</span>
+              </span>
+              <span className="text-[10px]">
+                {(user.completedQuestIds || []).some(id => id.includes("neural") || id === "quest-3") || (user.completedQuestIds || []).length >= 2
+                  ? "✓ Active"
+                  : "Test Net"}
+              </span>
+            </button>
+
+            <button
+              id="test-bench-streak-reset"
               onClick={() => handleTestStreak(4)}
               className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
                 isDark
@@ -254,42 +302,6 @@ export const Achievements: React.FC<AchievementsProps> = ({
                 <span>Reset to 4d</span>
               </span>
               <span className="text-[10px]">{user.streakDays}d</span>
-            </button>
-
-            <button
-              onClick={handleTestFoundation}
-              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
-                user.completedQuestIds?.includes("quest-1")
-                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
-                  : isDark
-                  ? "bg-[#27272A] border-zinc-700 hover:border-indigo-400"
-                  : "bg-white border-[#1E1B18] hover:bg-[#EEF2FF]"
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Foundations Q1</span>
-              </span>
-              <span className="text-[10px]">
-                {user.completedQuestIds?.includes("quest-1") ? "✓ Done" : "+ Complete"}
-              </span>
-            </button>
-
-            <button
-              onClick={() => handleTestStreak(14)}
-              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
-                user.streakDays >= 14
-                  ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-                  : isDark
-                  ? "bg-[#27272A] border-zinc-700 hover:border-amber-400"
-                  : "bg-white border-[#1E1B18] hover:bg-[#FEF08A]"
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-500" />
-                <span>14-Day Streak</span>
-              </span>
-              <span className="text-[10px]">{user.streakDays >= 14 ? "✓ 14d" : "Set 14d"}</span>
             </button>
           </div>
         </div>

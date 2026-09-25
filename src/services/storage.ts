@@ -130,7 +130,14 @@ class StorageAdapter implements IDataStore {
     const currentAchievements = profile.achievements || INITIAL_ACHIEVEMENTS;
     const updatedAchievements: Achievement[] = currentAchievements.map(a => {
       let shouldUnlock = false;
-      if (a.id === "first-spark" && completedQuestIds.length >= 1) shouldUnlock = true;
+      if ((a.id === "first-quest" || a.id === "first-spark") && completedQuestIds.length >= 1) shouldUnlock = true;
+      if ((a.id === "week-streak" || a.id === "streak-7") && profile.streakDays >= 7) shouldUnlock = true;
+      if (
+        (a.id === "neural-explorer" || a.id === "synaptic-sculptor") &&
+        (questId === "quest-3" || questId.includes("neural") || completedQuestIds.length >= 2)
+      ) {
+        shouldUnlock = true;
+      }
       if (a.id === "boundary-breaker" && questId === "quest-2") shouldUnlock = true;
       if (a.id === "synaptic-sculptor" && questId === "quest-3") shouldUnlock = true;
       if (a.id === "embedding-alchemist" && questId === "quest-4") shouldUnlock = true;
@@ -227,9 +234,18 @@ class StorageAdapter implements IDataStore {
 
   public async setStreakDays(days: number): Promise<UserProfile> {
     const profile = await this.getUserProfile();
+    const streakDays = Math.max(0, days);
+    const updatedAchievements = (profile.achievements || INITIAL_ACHIEVEMENTS).map(a => {
+      if ((a.id === "week-streak" || a.id === "streak-7") && streakDays >= 7 && !a.unlockedAt) {
+        return { ...a, unlockedAt: new Date().toISOString() };
+      }
+      return a;
+    });
+
     const updatedProfile: UserProfile = {
       ...profile,
-      streakDays: Math.max(0, days)
+      streakDays,
+      achievements: updatedAchievements
     };
     await this.saveUserProfile(updatedProfile);
     return updatedProfile;

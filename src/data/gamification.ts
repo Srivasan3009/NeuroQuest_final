@@ -2,6 +2,33 @@ import { Achievement, SkillMastery, UserProfile } from "../types";
 
 export const INITIAL_ACHIEVEMENTS: Achievement[] = [
   {
+    id: "first-quest",
+    title: "First Quest",
+    description: "Complete your initial quest on the AI learning journey.",
+    iconName: "Award",
+    unlockedAt: null,
+    category: "progression",
+    rarity: "common"
+  },
+  {
+    id: "week-streak",
+    title: "Week Streak",
+    description: "Maintain a continuous 7-day daily learning streak without missing a day.",
+    iconName: "Flame",
+    unlockedAt: null,
+    category: "streak",
+    rarity: "epic"
+  },
+  {
+    id: "neural-explorer",
+    title: "Neural Explorer",
+    description: "Explore neural networks, perceptron weights, and deep cognitive architectures.",
+    iconName: "Network",
+    unlockedAt: null,
+    category: "mastery",
+    rarity: "rare"
+  },
+  {
     id: "first-spark",
     title: "First Spark",
     description: "Complete your initial quest on the AI learning journey.",

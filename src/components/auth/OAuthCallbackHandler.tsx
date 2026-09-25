@@ -175,7 +175,7 @@ export const OAuthCallbackHandler: React.FC<OAuthCallbackHandlerProps> = ({
 
         if (!isMounted) return;
         setStatus("success");
-        setStatusMessage("Google Sign-In verified! Returning to NeuroQuest...");
+        setStatusMessage("Google Cadet Sign-In verified! Auto-closing window...");
 
         finishAuth(profile, hasOpener);
       } catch (err: any) {
@@ -201,7 +201,7 @@ export const OAuthCallbackHandler: React.FC<OAuthCallbackHandlerProps> = ({
     };
 
     const finishAuth = (profile: UserProfile, hasOpener: boolean) => {
-      // Clean up URL fragments
+      // 1. Clean up URL fragments
       try {
         if (window.history?.replaceState) {
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -210,7 +210,27 @@ export const OAuthCallbackHandler: React.FC<OAuthCallbackHandlerProps> = ({
         // Ignore
       }
 
-      // Notify window.opener if this is a popup
+      // 2. Broadcast across tabs/windows via BroadcastChannel
+      try {
+        if (typeof BroadcastChannel !== "undefined") {
+          const authChannel = new BroadcastChannel("neuroquest_auth_channel");
+          authChannel.postMessage({
+            type: "NEUROQUEST_AUTH_CALLBACK_SUCCESS",
+            user: profile,
+          });
+          setTimeout(() => {
+            try {
+              authChannel.close();
+            } catch {
+              // Ignore
+            }
+          }, 1000);
+        }
+      } catch (bcErr) {
+        console.warn("BroadcastChannel error:", bcErr);
+      }
+
+      // 3. Notify window.opener if this is a popup
       if (hasOpener && window.opener) {
         try {
           window.opener.postMessage(
@@ -223,21 +243,29 @@ export const OAuthCallbackHandler: React.FC<OAuthCallbackHandlerProps> = ({
         } catch (e) {
           console.warn("postMessage to opener failed:", e);
         }
-
-        // Attempt closing popup immediately
-        setTimeout(() => {
-          try {
-            window.close();
-          } catch {
-            // Browser might block scripts from closing
-          }
-        }, 400);
-      } else if (onCompleteStandalone) {
-        // Standalone browser tab flow: transition main app to logged in
-        setTimeout(() => {
-          onCompleteStandalone(profile);
-        }, 500);
       }
+
+      // 4. Trigger storage event for other tabs
+      try {
+        localStorage.setItem("neuroquest_auth_active", "true");
+        localStorage.setItem("neuroquest_oauth_synced_at", Date.now().toString());
+      } catch {
+        // Ignore
+      }
+
+      // 5. Attempt auto-closing the popup window immediately and with retries
+      const attemptClose = () => {
+        try {
+          window.close();
+        } catch {
+          // Ignore
+        }
+      };
+
+      attemptClose();
+      setTimeout(attemptClose, 250);
+      setTimeout(attemptClose, 600);
+      setTimeout(attemptClose, 1200);
     };
 
     processOAuth();
@@ -245,7 +273,7 @@ export const OAuthCallbackHandler: React.FC<OAuthCallbackHandlerProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [onCompleteStandalone]);
+  }, []);
 
   const handleManualClose = () => {
     try {
@@ -338,23 +366,23 @@ export const OAuthCallbackHandler: React.FC<OAuthCallbackHandlerProps> = ({
 
         {/* Action Controls / Instructions */}
         <div className="pt-2 space-y-2">
-          {status === "success" && isPopup && (
-            <div className="space-y-2">
-              <p className="text-[11px] text-emerald-400/90 font-medium">
-                Returning you to NeuroQuest automatically...
+          {status === "success" && (
+            <div className="space-y-2.5">
+              <p className="text-[11px] text-emerald-400 font-medium">
+                Cadet account authenticated. This window will auto-close.
               </p>
               <button
                 type="button"
                 id="btn-oauth-close-tab"
                 onClick={handleManualClose}
-                className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md active:scale-95"
+                className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md active:scale-95"
               >
-                Close Tab & Return to App
+                Close Tab Now
               </button>
             </div>
           )}
 
-          {status === "error" && isPopup && (
+          {status === "error" && (
             <button
               type="button"
               id="btn-oauth-dismiss"
@@ -362,23 +390,6 @@ export const OAuthCallbackHandler: React.FC<OAuthCallbackHandlerProps> = ({
               className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all active:scale-95"
             >
               Close Window
-            </button>
-          )}
-
-          {!isPopup && status === "success" && (
-            <button
-              type="button"
-              id="btn-oauth-enter-app"
-              onClick={() => {
-                if (onCompleteStandalone) {
-                  const current = authService.getCurrentUser();
-                  if (current) onCompleteStandalone(current);
-                }
-              }}
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
-            >
-              <span>Enter NeuroQuest</span>
-              <LogIn className="w-4 h-4" />
             </button>
           )}
         </div>

@@ -404,6 +404,10 @@ class AudioManager {
     this.playMissionComplete();
   }
 
+  public playSuccess() {
+    this.playMissionComplete();
+  }
+
   public playMissionComplete() {
     if (!this.settings.enabled) return;
     this.triggerHaptic([25, 40, 25, 60]);

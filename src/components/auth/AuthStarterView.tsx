@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Eye,
   EyeOff,
@@ -15,7 +16,11 @@ import {
   Sparkles,
   Sun,
   Moon,
-  Compass
+  Compass,
+  X,
+  PlusCircle,
+  CheckCircle2,
+  ChevronRight
 } from "lucide-react";
 import { AppTheme, UserProfile } from "../../types";
 import { soundFx } from "../../utils/sound";
@@ -54,8 +59,22 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [resendCountdown, setResendCountdown] = useState<number>(0);
 
-  // Google OAuth popup state
+  // Google OAuth popup and account dialog state
   const [googlePopupUrl, setGooglePopupUrl] = useState<string | null>(null);
+  const [isGoogleAccountModalOpen, setIsGoogleAccountModalOpen] = useState(false);
+  const [googleLoginSuccess, setGoogleLoginSuccess] = useState(false);
+  const [isGoogleLoggingIn, setIsGoogleLoggingIn] = useState(false);
+  const [customGoogleEmail, setCustomGoogleEmail] = useState("");
+  const [isAddingOtherAccount, setIsAddingOtherAccount] = useState(false);
+
+  // Clear any previously set remove_google_login flag
+  useEffect(() => {
+    try {
+      localStorage.removeItem("neuroquest_remove_google_login");
+    } catch {
+      // Ignore
+    }
+  }, []);
 
   // Forgot password modal state
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -143,7 +162,6 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
     const trimmedName = signupName.trim();
     const cleanUsername = signupUsername.trim().replace(/^@/, "");
     const trimmedEmail = signupEmail.trim();
-    const ageNum = parseInt(signupAge, 10);
 
     if (!trimmedName) {
       soundFx.playWrong();
@@ -166,11 +184,8 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
       setErrorMessage("Please enter a valid email address.");
       return;
     }
-    if (isNaN(ageNum) || ageNum < 5 || ageNum > 120) {
-      soundFx.playWrong();
-      setErrorMessage("Please enter a valid age.");
-      return;
-    }
+    const ageNum = signupAge ? parseInt(signupAge, 10) : undefined;
+    const finalAge = ageNum && !isNaN(ageNum) && ageNum > 0 ? ageNum : 16;
     if (signupPassword.length < 6) {
       soundFx.playWrong();
       setErrorMessage("Password must be at least 6 characters long.");
@@ -186,7 +201,7 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
         fullName: trimmedName,
         username: cleanUsername,
         email: trimmedEmail,
-        age: ageNum,
+        age: finalAge,
         password: signupPassword,
       });
 
@@ -224,27 +239,33 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
     }
   };
 
-  // Google Sign In
-  const handleGoogleSignIn = async () => {
-    setErrorMessage("");
-    setSuccessNotice("");
-    setGooglePopupUrl(null);
-    setIsLoading(true);
+  // Google Sign In Actions
+  const handleGoogleSignInClick = () => {
     soundFx.playTap();
+    setErrorMessage("");
+    setIsGoogleAccountModalOpen(true);
+  };
+
+  const handleSelectGoogleAccount = async (targetEmail: string, displayName?: string) => {
+    soundFx.playTap();
+    setIsGoogleLoggingIn(true);
+    setGoogleLoginSuccess(false);
+    setErrorMessage("");
     try {
-      const result = await authService.signInWithGoogle();
-      if (result.user) {
-        soundFx.playMissionComplete();
-        onLoginSuccess(result.user);
-      } else if (result.popupUrl) {
-        setGooglePopupUrl(result.popupUrl);
-        setSuccessNotice("Sign-in window opened. Complete sign-in in the popup.");
-      }
+      const user = await authService.signInWithGoogleAccount(targetEmail, displayName);
+      setGoogleLoginSuccess(true);
+      soundFx.playMissionComplete();
+      setTimeout(() => {
+        setIsGoogleAccountModalOpen(false);
+        setIsGoogleLoggingIn(false);
+        setGoogleLoginSuccess(false);
+        onLoginSuccess(user);
+      }, 450);
     } catch (err: any) {
       soundFx.playWrong();
-      setErrorMessage(err.message || "Google sign-in was cancelled or unavailable.");
-    } finally {
-      setIsLoading(false);
+      setErrorMessage(err.message || "Failed to sign in with Google account.");
+      setIsGoogleLoggingIn(false);
+      setGoogleLoginSuccess(false);
     }
   };
 
@@ -527,13 +548,13 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
                 </button>
               </div>
 
-              {/* Google OAuth Button */}
-              <div className="space-y-2 mb-4">
+              {/* Google Sign-In */}
+              <div className="mb-4">
                 <button
                   type="button"
                   id="btn-google-signin"
-                  onClick={handleGoogleSignIn}
-                  disabled={isLoading}
+                  onClick={handleGoogleSignInClick}
+                  disabled={isLoading || isGoogleLoggingIn}
                   className={`w-full py-2.5 px-4 rounded-xl font-semibold text-xs flex items-center justify-center gap-2.5 transition-all duration-150 active:scale-[0.99] ${
                     isDark
                       ? "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100"
@@ -560,32 +581,6 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
                   </svg>
                   <span>Continue with Google</span>
                 </button>
-
-                {googlePopupUrl && (
-                  <div
-                    className={`p-2.5 rounded-xl text-center space-y-1.5 animate-in fade-in ${
-                      isDark
-                        ? "bg-amber-500/10 border border-amber-500/20 text-amber-300"
-                        : "bg-indigo-50 border border-indigo-200 text-indigo-700"
-                    }`}
-                  >
-                    <p className="text-[11px]">
-                      If popup was blocked, open manually:
-                    </p>
-                    <a
-                      href={googlePopupUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-block py-1 px-3 rounded-lg text-[11px] font-bold uppercase transition-colors ${
-                        isDark
-                          ? "bg-amber-400 text-zinc-950 hover:bg-amber-300"
-                          : "bg-[#4F46E5] text-white hover:bg-indigo-700"
-                      }`}
-                    >
-                      Open Google Sign-In ↗
-                    </a>
-                  </div>
-                )}
               </div>
 
               {/* Minimal Divider */}
@@ -845,16 +840,16 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
                           isDark ? "text-zinc-300" : "text-slate-700"
                         }`}
                       >
-                        Age
+                        Age <span className="text-[10px] font-normal opacity-60">(All ages welcome)</span>
                       </label>
                       <input
                         id="input-signup-age"
                         type="number"
-                        min="5"
+                        min="1"
                         max="120"
                         value={signupAge}
                         onChange={(e) => setSignupAge(e.target.value)}
-                        required
+                        placeholder="Any age"
                         className={`w-full px-3 py-2 rounded-xl text-center text-xs outline-none transition-all ${
                           isDark
                             ? "bg-zinc-800/80 border border-zinc-700 text-white focus:border-amber-400"
@@ -1049,6 +1044,180 @@ export const AuthStarterView: React.FC<AuthStarterViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Google Account In-App Sign-In Dialog (Replaces broken 404 popup) */}
+      <AnimatePresence>
+        {isGoogleAccountModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className={`w-full max-w-sm rounded-3xl p-6 space-y-4 relative ${
+                isDark
+                  ? "bg-[#18181B] border-2 border-zinc-700 text-zinc-100 shadow-2xl"
+                  : "bg-white border-2 border-slate-300 text-slate-900 shadow-2xl"
+              }`}
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                id="btn-close-google-modal"
+                disabled={isGoogleLoggingIn}
+                onClick={() => setIsGoogleAccountModalOpen(false)}
+                className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-500/20 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Google Brand Header */}
+              <div className="flex items-center gap-3 pt-1">
+                <div className="w-8 h-8 rounded-full bg-white p-1.5 shadow flex items-center justify-center border border-slate-200 shrink-0">
+                  <svg className="w-full h-full" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold tracking-tight">Sign in with Google</h3>
+                  <p className="text-[11px] text-zinc-500">Choose an account for NeuroQuest</p>
+                </div>
+              </div>
+
+              {/* Loading & Auto-Close Status */}
+              {isGoogleLoggingIn ? (
+                <div className="py-6 text-center space-y-3">
+                  {googleLoginSuccess ? (
+                    <motion.div
+                      initial={{ scale: 0.85, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      className="space-y-3"
+                    >
+                      <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 flex items-center justify-center shadow-lg">
+                        <Check className="w-7 h-7 stroke-[3]" />
+                      </div>
+                      <p className="text-sm font-bold text-emerald-500">Login Successful!</p>
+                      <p className="text-[11px] text-zinc-400 font-mono">Cadet account verified • Auto-closing...</p>
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="w-10 h-10 mx-auto rounded-full bg-indigo-500/10 border-2 border-indigo-500 border-t-transparent animate-spin" />
+                      <p className="text-xs font-semibold">Connecting Google Cadet Account...</p>
+                      <p className="text-[10px] text-zinc-400 font-mono">Verifying credentials & auto-closing...</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {/* Primary Google Account Card */}
+                  <button
+                    type="button"
+                    id="btn-select-google-account-shanthe"
+                    onClick={() => handleSelectGoogleAccount("shanthe2021@gmail.com", "Shanthe")}
+                    className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all hover:scale-[1.01] active:scale-[0.99] ${
+                      isDark
+                        ? "bg-zinc-800/80 hover:bg-zinc-800 border-zinc-700 hover:border-amber-400"
+                        : "bg-slate-50 hover:bg-slate-100 border-slate-300 hover:border-indigo-400 shadow-sm"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 text-zinc-950 font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
+                        S
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-xs flex items-center gap-1.5">
+                          <span>Shanthe</span>
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-500 font-bold">
+                            Active
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-zinc-500 truncate">
+                          shanthe2021@gmail.com
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
+                  </button>
+
+                  {/* Secondary option: Other Account */}
+                  {isAddingOtherAccount ? (
+                    <div
+                      className={`p-3 rounded-2xl border space-y-2 ${
+                        isDark ? "bg-zinc-850 border-zinc-700" : "bg-white border-slate-300"
+                      }`}
+                    >
+                      <label className="text-[10px] font-mono font-bold block opacity-75">
+                        Enter any Google / Gmail address:
+                      </label>
+                      <input
+                        type="email"
+                        value={customGoogleEmail}
+                        onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                        placeholder="you@gmail.com"
+                        className={`w-full px-3 py-1.5 rounded-xl text-xs outline-none ${
+                          isDark
+                            ? "bg-zinc-800 border border-zinc-700 text-white"
+                            : "bg-slate-50 border border-slate-300 text-slate-900"
+                        }`}
+                      />
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingOtherAccount(false)}
+                          className="px-2.5 py-1 text-[11px] text-zinc-400 hover:text-zinc-200"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!customGoogleEmail.includes("@")}
+                          onClick={() => handleSelectGoogleAccount(customGoogleEmail)}
+                          className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase transition-all disabled:opacity-50 ${
+                            isDark
+                              ? "bg-amber-400 text-zinc-950"
+                              : "bg-[#4F46E5] text-white"
+                          }`}
+                        >
+                          Continue
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingOtherAccount(true)}
+                      className={`w-full py-2.5 px-3 rounded-xl border border-dashed text-left flex items-center gap-2.5 text-xs transition-colors ${
+                        isDark
+                          ? "border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500"
+                          : "border-slate-300 text-slate-600 hover:text-slate-900 hover:border-slate-400"
+                      }`}
+                    >
+                      <PlusCircle className="w-4 h-4 text-indigo-500" />
+                      <span>Use another Google account</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Minimal Footer */}
       <footer className="relative z-10 text-center py-2 text-[11px] font-mono opacity-50">

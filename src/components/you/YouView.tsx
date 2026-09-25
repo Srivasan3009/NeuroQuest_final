@@ -960,6 +960,7 @@ export const YouView: React.FC<YouViewProps> = ({
       </div>
 
       {/* 3. Action Menu List matching video */}
+
       <div className="space-y-2.5">
         {/* Achievements & Badges */}
         <button
@@ -1209,76 +1210,62 @@ export const YouView: React.FC<YouViewProps> = ({
         </button>
       </div>
 
-      {/* 5. Certificates & Badges Horizontal Showcase */}
+      {/* 4. Certificates & Badges Horizontal Showcase */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
-          <div className={`text-[10px] font-mono uppercase font-bold ${isDark ? "text-zinc-400" : "text-zinc-500"}`}>
-            UNLOCKS • BADGES ({achievementsSummary.earned}/{achievementsSummary.total})
+          <div className={`text-[10px] font-mono uppercase font-bold ${isDark ? "text-zinc-400" : "text-slate-500"}`}>
+            CERTIFICATES & BADGES
           </div>
           <button
-            id="btn-view-all-badges"
+            onClick={() => setActiveSubModal("certificates")}
+            className="text-[10px] font-mono font-bold text-indigo-500 dark:text-amber-400 hover:underline"
+          >
+            VIEW ALL
+          </button>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+          <div
+            onClick={() => setActiveSubModal("certificates")}
+            className={`flex-shrink-0 w-44 p-3.5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
+              isNeumorphic
+                ? "neu-flat text-slate-800"
+                : isDark
+                ? "bg-[#27272A] border-[#3F3F46] text-zinc-100"
+                : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs">
+                <Award className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-mono font-bold uppercase opacity-75">FOUNDATIONS</span>
+            </div>
+            <div className="text-xs font-black uppercase line-clamp-1">AI Cadet Certificate</div>
+            <div className="text-[10px] opacity-60 mt-1 font-mono">6 Stages • Verified</div>
+          </div>
+
+          <div
             onClick={() => {
               soundFx.playTap();
               setInAchievementsView(true);
             }}
-            className={`text-xs font-mono font-black uppercase flex items-center gap-1 hover:underline ${
-              isDark ? "text-amber-400" : "text-[#4F46E5]"
+            className={`flex-shrink-0 w-44 p-3.5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
+              isNeumorphic
+                ? "neu-flat text-slate-800"
+                : isDark
+                ? "bg-[#27272A] border-[#3F3F46] text-zinc-100"
+                : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
             }`}
           >
-            <span>View All ({achievementsSummary.total})</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
-          {milestoneBadges.slice(0, 8).map((b) => (
-            <button
-              key={b.id}
-              onClick={() => {
-                soundFx.playTap();
-                setInAchievementsView(true);
-              }}
-              className={`shrink-0 w-36 p-4 rounded-2xl text-center space-y-1.5 transition-all text-left ${
-                isNeumorphic
-                  ? b.isEarned
-                    ? "neu-flat text-slate-800"
-                    : "neu-inset text-slate-400 opacity-70"
-                  : b.isEarned
-                  ? isDark
-                    ? "bg-[#27272A] border-2 border-amber-400/60 text-zinc-100 shadow-md"
-                    : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                  : isDark
-                  ? "bg-[#18181B] border-2 border-[#3F3F46] text-zinc-500 opacity-60"
-                  : "bg-zinc-100 border-2 border-zinc-300 text-zinc-400 opacity-60"
-              }`}
-            >
-              <div
-                className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center ${
-                  isNeumorphic
-                    ? b.isEarned
-                      ? "neu-inset text-amber-600"
-                      : "neu-flat text-slate-400"
-                    : b.isEarned
-                    ? isDark
-                      ? "bg-amber-400/20 text-amber-400 border border-amber-400/30"
-                      : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
-                    : "bg-zinc-200 text-zinc-400 border border-transparent"
-                }`}
-              >
-                {b.id.includes("streak") ? (
-                  <Flame className="w-5 h-5" />
-                ) : b.id.includes("foundation") ? (
-                  <Cpu className="w-5 h-5" />
-                ) : (
-                  <Trophy className="w-5 h-5" />
-                )}
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold text-xs">
+                <Trophy className="w-4 h-4" />
               </div>
-              <div className="text-xs font-black truncate text-center">{b.title}</div>
-              <div className={`text-[10px] line-clamp-1 text-center ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                {b.isEarned ? "Unlocked ✓" : `${b.currentValue}/${b.targetValue} ${b.unit}`}
-              </div>
-            </button>
-          ))}
+              <span className="text-[10px] font-mono font-bold uppercase opacity-75">ACHIEVEMENTS</span>
+            </div>
+            <div className="text-xs font-black uppercase line-clamp-1">Cadet Milestones</div>
+            <div className="text-[10px] opacity-60 mt-1 font-mono">Badges & Rewards</div>
+          </div>
         </div>
       </div>
 

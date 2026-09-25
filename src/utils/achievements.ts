@@ -22,19 +22,46 @@ export function computeMilestoneBadges(
   const isFoundationsComplete = completedFoundations >= totalFoundations;
 
   // Find saved unlocked date from user profile achievements if present
-  const getSavedUnlockedAt = (id: string, isEarned: boolean): string | null => {
+  const getSavedUnlockedAt = (ids: string | string[], isEarned: boolean): string | null => {
     if (!isEarned) return null;
-    const match = user.achievements?.find((a) => a.id === id);
-    if (match?.unlockedAt) return match.unlockedAt;
+    const checkIds = Array.isArray(ids) ? ids : [ids];
+    for (const id of checkIds) {
+      const match = user.achievements?.find((a) => a.id === id);
+      if (match?.unlockedAt) return match.unlockedAt;
+    }
     // Fallback to active date
     return user.lastActiveDate || new Date().toISOString().split("T")[0];
   };
 
+  const isNeuralExplorerUnlocked =
+    completedIds.some((id) => id.includes("neural") || id.includes("nn") || id === "quest-3" || id === "quest-f3") ||
+    completedIds.length >= 2 ||
+    (user.skills || []).some((s) => s.name.toLowerCase().includes("neuron") && s.points >= 25);
+
   const badges: MilestoneBadge[] = [
-    // 1. 7-DAY STREAK (Explicitly requested by user)
+    // 1. FIRST QUEST (Explicitly requested by user: 'First Quest')
     {
-      id: "streak-7",
-      title: "Streak Titan",
+      id: "first-quest",
+      title: "First Quest",
+      description: "Complete your initial quest on the AI learning journey and embark as an AI cadet.",
+      milestoneGoal: "Complete 1st Quest",
+      currentValue: Math.min(completedIds.length, 1),
+      targetValue: 1,
+      unit: "quest",
+      isEarned: completedIds.length >= 1,
+      progressPercent: Math.min(100, Math.round((completedIds.length / 1) * 100)),
+      category: "curriculum",
+      rarity: "common",
+      iconName: "Award",
+      xpBonus: 50,
+      unlockedAt: getSavedUnlockedAt(["first-quest", "first-spark"], completedIds.length >= 1),
+      tips: "Finish the 5 interactive phases (Learn, Interact, Solve, Prove, Reward) of any quest."
+    },
+
+    // 2. WEEK STREAK (Explicitly requested by user: 'Week Streak')
+    {
+      id: "week-streak",
+      title: "Week Streak",
       description: "Maintain a continuous 7-day daily learning streak without missing a day.",
       milestoneGoal: "7-Day Continuous Streak",
       currentValue: Math.min(streak, 7),
@@ -46,11 +73,30 @@ export function computeMilestoneBadges(
       rarity: "epic",
       iconName: "Flame",
       xpBonus: 150,
-      unlockedAt: getSavedUnlockedAt("streak-7", streak >= 7),
+      unlockedAt: getSavedUnlockedAt(["week-streak", "streak-7"], streak >= 7),
       tips: "Practice at least one lesson or review a concept each day to protect your streak flame."
     },
 
-    // 2. COMPLETING ALL FOUNDATION QUESTS (Explicitly requested by user)
+    // 3. NEURAL EXPLORER (Explicitly requested by user: 'Neural Explorer')
+    {
+      id: "neural-explorer",
+      title: "Neural Explorer",
+      description: "Explore artificial neurons, non-linear activation functions, and synaptic architectures.",
+      milestoneGoal: "Explore Neural Architecture",
+      currentValue: isNeuralExplorerUnlocked ? 1 : Math.min(completedIds.length, 1),
+      targetValue: 1,
+      unit: "frontier",
+      isEarned: isNeuralExplorerUnlocked,
+      progressPercent: isNeuralExplorerUnlocked ? 100 : Math.min(100, completedIds.length > 0 ? 50 : 0),
+      category: "mastery",
+      rarity: "rare",
+      iconName: "Network",
+      xpBonus: 120,
+      unlockedAt: getSavedUnlockedAt(["neural-explorer", "synaptic-sculptor"], isNeuralExplorerUnlocked),
+      tips: "Solve neural logic gates or explore deep learning stages to unlock the Neural Explorer badge."
+    },
+
+    // 4. COMPLETING ALL FOUNDATION QUESTS
     {
       id: "foundation-master",
       title: "Foundation Architect",
@@ -69,7 +115,7 @@ export function computeMilestoneBadges(
       tips: "Navigate to the Home journey tab and complete 'The Paradigm Shift: Rules vs. Learning'."
     },
 
-    // 3. 3-DAY STREAK
+    // 5. 3-DAY STREAK
     {
       id: "streak-3",
       title: "Habit Spark",
@@ -88,7 +134,7 @@ export function computeMilestoneBadges(
       tips: "Log in and complete an activity for 3 consecutive calendar days."
     },
 
-    // 4. 14-DAY STREAK
+    // 6. 14-DAY STREAK
     {
       id: "streak-14",
       title: "Neural Marathoner",
@@ -105,25 +151,6 @@ export function computeMilestoneBadges(
       xpBonus: 300,
       unlockedAt: getSavedUnlockedAt("streak-14", streak >= 14),
       tips: "Consistency beats intensity. Review daily for two solid weeks."
-    },
-
-    // 5. FIRST SPARK (First Quest Completed)
-    {
-      id: "first-spark",
-      title: "First Spark",
-      description: "Complete your initial quest on the AI learning journey.",
-      milestoneGoal: "Complete 1 Quest",
-      currentValue: Math.min(completedIds.length, 1),
-      targetValue: 1,
-      unit: "quest",
-      isEarned: completedIds.length >= 1,
-      progressPercent: Math.min(100, Math.round((completedIds.length / 1) * 100)),
-      category: "curriculum",
-      rarity: "common",
-      iconName: "Award",
-      xpBonus: 50,
-      unlockedAt: getSavedUnlockedAt("first-spark", completedIds.length >= 1),
-      tips: "Finish the 5 stages (Learn, Interact, Solve, Prove, Reward) of any quest."
     },
 
     // 6. SCHOLAR (3 Quests Completed)
