@@ -3,28 +3,19 @@ import {
   Users,
   UserPlus,
   UserCheck,
-  UserX,
   Flame,
   Zap,
-  Sparkles,
   Send,
   MessageSquare,
-  Share2,
   Heart,
   Search,
   CheckCircle2,
-  TrendingUp,
   X,
-  Compass,
-  Trophy,
-  Shield,
   Activity,
-  Award,
   Clock,
   Inbox,
   SendHorizonal,
   History,
-  AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserProfile, AppTheme } from "../../types";
@@ -33,7 +24,7 @@ import {
   FriendUser,
   FriendRequest,
   ActivityFeedItem,
-  StudyPartyMessage
+  StudyPartyMessage,
 } from "../../services/social";
 import { soundFx } from "../../utils/sound";
 
@@ -48,11 +39,11 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
   isOpen,
   onClose,
   user,
-  theme
+  theme,
 }) => {
   const [activeTab, setActiveTab] = useState<"feed" | "friends" | "requests" | "party">("feed");
   const [requestsSubTab, setRequestsSubTab] = useState<"incoming" | "outgoing" | "history">("incoming");
-  
+
   const [friends, setFriends] = useState<FriendUser[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [feed, setFeed] = useState<ActivityFeedItem[]>([]);
@@ -64,8 +55,11 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
   const [actionNotice, setActionNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [partyInput, setPartyInput] = useState("");
 
-  const isDark = theme === "obsidian-noir" || theme === "obsidian-gold" || theme === "cyber-dark";
-  const isNeumorphic = theme === "neumorphic";
+  const isDark =
+    theme === "obsidian-noir" ||
+    theme === "obsidian-gold" ||
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
 
   const refreshState = () => {
     setFriends(socialService.getFriends());
@@ -86,8 +80,12 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
 
   if (!isOpen) return null;
 
-  const pendingIncomingCount = friendRequests.filter((r) => r.status === "pending" && r.direction === "incoming").length;
-  const pendingOutgoingCount = friendRequests.filter((r) => r.status === "pending" && r.direction === "outgoing").length;
+  const pendingIncomingCount = friendRequests.filter(
+    (r) => r.status === "pending" && r.direction === "incoming"
+  ).length;
+  const pendingOutgoingCount = friendRequests.filter(
+    (r) => r.status === "pending" && r.direction === "outgoing"
+  ).length;
   const historyRequests = friendRequests.filter((r) => r.status !== "pending");
 
   const handleSendFriendRequest = (e: React.FormEvent) => {
@@ -175,59 +173,59 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
   const handleNudge = (friend: FriendUser) => {
     soundFx.playSpark();
     socialService.sendNudge(friend.name, user.fullName || "You");
-    setActionNotice({ type: "success", text: `Sent study boost to ${friend.name}! ⚡` });
+    setActionNotice({ type: "success", text: `Sent study boost to ${friend.name}` });
     setTimeout(() => setActionNotice(null), 3000);
   };
 
   const mutualFriends = friends.filter((f) => f.isMutual);
+  const activeCount = friends.filter((f) => f.status === "online" || f.status === "in_quest").length;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/45 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 12 }}
-          transition={{ type: "spring", stiffness: 350, damping: 28 }}
-          className={`w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl transition-all ${
-            isNeumorphic
-              ? "neu-raised text-slate-800"
-              : isDark
-              ? "bg-[#18181B] border-2 border-[#3F3F46] text-zinc-100"
-              : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[6px_6px_0px_#1E1B18]"
+          transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+          className={`w-full max-w-2xl max-h-[88vh] flex flex-col rounded-3xl overflow-hidden apple-surface ${
+            isDark ? "text-zinc-100" : "text-[#1D1D1F]"
           }`}
         >
           {/* Header */}
           <div
-            className={`p-4 sm:p-5 flex items-center justify-between border-b ${
-              isNeumorphic
-                ? "border-slate-300/80 bg-slate-100/60"
-                : isDark
-                ? "border-[#27272A] bg-[#202024]"
-                : "border-[#1E1B18] bg-[#FAF5EE]"
+            className={`px-6 py-4 flex items-center justify-between border-b apple-glass ${
+              isDark ? "border-white/[0.08]" : "border-black/[0.06]"
             }`}
           >
             <div className="flex items-center gap-3">
               <div
                 className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-                  isNeumorphic
-                    ? "neu-inset text-indigo-600"
-                    : isDark
-                    ? "bg-amber-400/20 text-amber-400 border border-amber-400/30"
-                    : "bg-[#4F46E5] text-white border-2 border-[#1E1B18]"
+                  isDark
+                    ? "bg-[#2997FF]/15 text-[#2997FF]"
+                    : "bg-[#0071E3]/10 text-[#0071E3]"
                 }`}
               >
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-black tracking-wide uppercase flex items-center gap-2">
-                  <span>Cadet Social & Study Squad</span>
+                <h2 className="font-display text-base sm:text-lg font-semibold tracking-tight">
+                  Study Squad & Social
                 </h2>
-                <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500">
-                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>{friends.filter((f) => f.status === "online" || f.status === "in_quest").length} Cadets active right now</span>
+                <div
+                  className={`flex items-center gap-1.5 text-xs ${
+                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                  }`}
+                >
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="font-mono tabular-nums">{activeCount} active</span>
                   {pendingIncomingCount > 0 && (
-                    <span className="text-amber-500 font-bold">• {pendingIncomingCount} pending request{pendingIncomingCount > 1 ? "s" : ""}</span>
+                    <>
+                      <span>·</span>
+                      <span className="text-[#0071E3] dark:text-[#2997FF] font-medium">
+                        {pendingIncomingCount} pending request{pendingIncomingCount > 1 ? "s" : ""}
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
@@ -238,25 +236,32 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                 soundFx.playTap();
                 onClose();
               }}
-              className={`p-2 rounded-full transition-colors ${
-                isDark ? "hover:bg-zinc-800 text-zinc-400" : "hover:bg-zinc-200 text-zinc-600"
+              aria-label="Close squad modal"
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                isDark
+                  ? "bg-white/[0.08] text-zinc-300 hover:bg-white/[0.14]"
+                  : "bg-black/[0.05] text-[#6E6E73] hover:bg-black/[0.08] hover:text-[#1D1D1F]"
               }`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Action Notice Alert */}
+          {/* Action Notice Banner */}
           {actionNotice && (
             <div
-              className={`px-4 py-2.5 text-xs font-mono font-bold flex items-center justify-between border-b animate-in fade-in duration-200 ${
+              className={`px-6 py-2.5 text-xs font-medium flex items-center justify-between border-b ${
                 actionNotice.type === "success"
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                  ? isDark
+                    ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : isDark
+                  ? "bg-rose-500/10 text-rose-300 border-rose-500/20"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
               }`}
             >
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{actionNotice.text}</span>
               </div>
               <button onClick={() => setActionNotice(null)} className="opacity-70 hover:opacity-100">
@@ -265,172 +270,184 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
             </div>
           )}
 
-          {/* Tab Navigation */}
+          {/* Segmented Tab Strip */}
           <div
-            className={`flex items-center border-b px-4 sm:px-6 gap-1 sm:gap-2 text-xs font-mono font-black overflow-x-auto ${
-              isNeumorphic ? "border-slate-300/80 bg-slate-50/50" : isDark ? "border-[#27272A] bg-[#18181B]" : "border-[#1E1B18]/30"
+            className={`px-5 py-2.5 border-b overflow-x-auto no-scrollbar ${
+              isDark
+                ? "border-white/[0.06] bg-[#141416]/50"
+                : "border-black/[0.05] bg-[#F5F5F7]/70"
             }`}
           >
-            <button
-              id="tab-btn-activity-feed"
-              onClick={() => {
-                soundFx.playTap();
-                setActiveTab("feed");
-              }}
-              className={`py-3 px-2.5 sm:px-3 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
-                activeTab === "feed"
-                  ? isDark
-                    ? "border-amber-400 text-amber-400"
-                    : "border-[#4F46E5] text-[#4F46E5]"
-                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              }`}
-            >
-              <Activity className="w-4 h-4" />
-              <span>LIVE FEED</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                {feed.length}
-              </span>
-            </button>
+            <div className="flex items-center gap-1.5 min-w-max">
+              <button
+                id="tab-btn-activity-feed"
+                onClick={() => {
+                  soundFx.playTap();
+                  setActiveTab("feed");
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                  activeTab === "feed"
+                    ? isDark
+                      ? "bg-[#2C2C2E] text-white shadow-xs"
+                      : "bg-white text-[#1D1D1F] shadow-xs"
+                    : isDark
+                    ? "text-zinc-400 hover:text-zinc-200"
+                    : "text-[#6E6E73] hover:text-[#1D1D1F]"
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>Live Feed</span>
+                <span className="font-mono tabular-nums opacity-65">{feed.length}</span>
+              </button>
 
-            <button
-              id="tab-btn-friends-list"
-              onClick={() => {
-                soundFx.playTap();
-                setActiveTab("friends");
-              }}
-              className={`py-3 px-2.5 sm:px-3 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
-                activeTab === "friends"
-                  ? isDark
-                    ? "border-amber-400 text-amber-400"
-                    : "border-[#4F46E5] text-[#4F46E5]"
-                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>PARTNERS ({mutualFriends.length})</span>
-            </button>
+              <button
+                id="tab-btn-friends-list"
+                onClick={() => {
+                  soundFx.playTap();
+                  setActiveTab("friends");
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                  activeTab === "friends"
+                    ? isDark
+                      ? "bg-[#2C2C2E] text-white shadow-xs"
+                      : "bg-white text-[#1D1D1F] shadow-xs"
+                    : isDark
+                    ? "text-zinc-400 hover:text-zinc-200"
+                    : "text-[#6E6E73] hover:text-[#1D1D1F]"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Partners</span>
+                <span className="font-mono tabular-nums opacity-65">{mutualFriends.length}</span>
+              </button>
 
-            <button
-              id="tab-btn-friend-requests"
-              onClick={() => {
-                soundFx.playTap();
-                setActiveTab("requests");
-              }}
-              className={`py-3 px-2.5 sm:px-3 border-b-2 flex items-center gap-1.5 transition-all relative whitespace-nowrap ${
-                activeTab === "requests"
-                  ? isDark
-                    ? "border-amber-400 text-amber-400"
-                    : "border-[#4F46E5] text-[#4F46E5]"
-                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              }`}
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>REQUESTS</span>
-              {pendingIncomingCount > 0 ? (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 text-zinc-950 font-bold animate-pulse">
-                  {pendingIncomingCount}
-                </span>
-              ) : (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                  {friendRequests.filter((r) => r.status === "pending").length}
-                </span>
-              )}
-            </button>
+              <button
+                id="tab-btn-friend-requests"
+                onClick={() => {
+                  soundFx.playTap();
+                  setActiveTab("requests");
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                  activeTab === "requests"
+                    ? isDark
+                      ? "bg-[#2C2C2E] text-white shadow-xs"
+                      : "bg-white text-[#1D1D1F] shadow-xs"
+                    : isDark
+                    ? "text-zinc-400 hover:text-zinc-200"
+                    : "text-[#6E6E73] hover:text-[#1D1D1F]"
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Requests</span>
+                {pendingIncomingCount > 0 ? (
+                  <span className="px-1.5 py-0.2 rounded-full bg-[#0071E3] text-white text-[10px] font-mono tabular-nums font-semibold">
+                    {pendingIncomingCount}
+                  </span>
+                ) : (
+                  <span className="font-mono tabular-nums opacity-65">
+                    {friendRequests.filter((r) => r.status === "pending").length}
+                  </span>
+                )}
+              </button>
 
-            <button
-              id="tab-btn-study-party"
-              onClick={() => {
-                soundFx.playTap();
-                setActiveTab("party");
-              }}
-              className={`py-3 px-2.5 sm:px-3 border-b-2 flex items-center gap-1.5 transition-all whitespace-nowrap ${
-                activeTab === "party"
-                  ? isDark
-                    ? "border-amber-400 text-amber-400"
-                    : "border-[#4F46E5] text-[#4F46E5]"
-                  : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-              }`}
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>SQUAD CHAT</span>
-            </button>
+              <button
+                id="tab-btn-study-party"
+                onClick={() => {
+                  soundFx.playTap();
+                  setActiveTab("party");
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                  activeTab === "party"
+                    ? isDark
+                      ? "bg-[#2C2C2E] text-white shadow-xs"
+                      : "bg-white text-[#1D1D1F] shadow-xs"
+                    : isDark
+                    ? "text-zinc-400 hover:text-zinc-200"
+                    : "text-[#6E6E73] hover:text-[#1D1D1F]"
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Squad Chat</span>
+              </button>
+            </div>
           </div>
 
           {/* Body Content */}
-          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 max-h-[60vh]">
+          <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
             {/* 1. ACTIVITY FEED TAB */}
             {activeTab === "feed" && (
-              <div className="space-y-3.5">
+              <div
+                className={`rounded-2xl divide-y border ${
+                  isDark
+                    ? "bg-[#2C2C2E]/40 border-white/[0.06] divide-white/[0.06]"
+                    : "bg-[#F5F5F7]/70 border-black/[0.05] divide-black/[0.05]"
+                }`}
+              >
                 {feed.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`p-4 rounded-2xl transition-all ${
-                      isNeumorphic
-                        ? "neu-flat text-slate-800"
-                        : isDark
-                        ? "bg-[#202024] border border-[#2E2E32] text-zinc-200 hover:border-zinc-700"
-                        : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono font-black text-sm shrink-0 ${
-                            isNeumorphic
-                              ? "neu-inset text-indigo-600"
-                              : isDark
-                              ? "bg-zinc-800 text-amber-400 border border-zinc-700"
-                              : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
-                          }`}
-                        >
-                          {item.userLetter}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-xs">{item.userName}</span>
-                            <span className="text-[10px] font-mono text-zinc-500">• {item.timestamp}</span>
-                          </div>
-                          <div className="font-black text-xs mt-0.5">{item.title}</div>
-                          <p className={`text-xs mt-1 ${isNeumorphic ? "text-slate-600" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                            {item.description}
-                          </p>
-
-                          {/* Shared Prompt Snippet if any */}
-                          {item.sharedPayload?.promptSnippet && (
-                            <div
-                              className={`mt-2 p-2.5 rounded-xl font-mono text-[11px] border ${
-                                isDark
-                                  ? "bg-zinc-900/80 border-zinc-800 text-emerald-300"
-                                  : "bg-zinc-50 border-zinc-200 text-zinc-800"
-                              }`}
-                            >
-                              <div className="text-[10px] uppercase font-bold text-zinc-500 mb-1">PROMPT SNIPPET:</div>
-                              <code>{item.sharedPayload.promptSnippet}</code>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Clap / Cheer button */}
-                      <button
-                        onClick={() => handleToggleClap(item)}
-                        className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all shrink-0 ${
-                          item.hasClapped
-                            ? isDark
-                              ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
-                              : "bg-[#EEF2FF] text-[#4F46E5] border border-[#4F46E5]"
-                            : isDark
-                            ? "bg-zinc-800/60 text-zinc-400 hover:text-white border border-zinc-700/60"
-                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 border border-zinc-200"
+                  <div key={item.id} className="p-4 flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center font-display font-semibold text-sm shrink-0 ${
+                          isDark
+                            ? "bg-[#2997FF]/15 text-[#2997FF]"
+                            : "bg-[#0071E3]/10 text-[#0071E3]"
                         }`}
                       >
-                        <Heart className={`w-3.5 h-3.5 ${item.hasClapped ? "fill-current" : ""}`} />
-                        <span>{item.clapsCount}</span>
-                      </button>
+                        {item.userLetter}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                          <span className="font-semibold">{item.userName}</span>
+                          <span className={isDark ? "text-zinc-500" : "text-[#86868B]"}>
+                            · {item.timestamp}
+                          </span>
+                        </div>
+                        <div className="font-medium text-sm mt-0.5">{item.title}</div>
+                        <p
+                          className={`text-xs mt-1 leading-relaxed ${
+                            isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                          }`}
+                        >
+                          {item.description}
+                        </p>
+
+                        {item.sharedPayload?.promptSnippet && (
+                          <div
+                            className={`mt-2.5 p-3 rounded-xl font-mono text-[11px] border ${
+                              isDark
+                                ? "bg-[#1C1C1E] border-white/[0.06] text-emerald-300"
+                                : "bg-white border-black/[0.06] text-[#1D1D1F]"
+                            }`}
+                          >
+                            <div
+                              className={`text-[10px] uppercase tracking-wider mb-1 ${
+                                isDark ? "text-zinc-500" : "text-[#86868B]"
+                              }`}
+                            >
+                              Prompt Snippet
+                            </div>
+                            <code>{item.sharedPayload.promptSnippet}</code>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </motion.div>
+
+                    <button
+                      onClick={() => handleToggleClap(item)}
+                      className={`px-2.5 py-1.5 rounded-full text-xs font-mono tabular-nums font-medium flex items-center gap-1.5 transition-colors shrink-0 border ${
+                        item.hasClapped
+                          ? isDark
+                            ? "bg-[#2997FF]/15 text-[#2997FF] border-[#2997FF]/30"
+                            : "bg-[#0071E3]/10 text-[#0071E3] border-[#0071E3]/25"
+                          : isDark
+                          ? "bg-[#1C1C1E] text-zinc-400 hover:text-white border-white/[0.06]"
+                          : "bg-white text-[#6E6E73] hover:text-[#1D1D1F] border-black/[0.06]"
+                      }`}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${item.hasClapped ? "fill-current" : ""}`} />
+                      <span>{item.clapsCount}</span>
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -438,50 +455,40 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
             {/* 2. FRIENDS DIRECTORY */}
             {activeTab === "friends" && (
               <div className="space-y-4">
-                {/* Search / Add Friend by Username Quick Bar */}
+                {/* Search / Invite Bar */}
                 <form
                   onSubmit={handleSendFriendRequest}
-                  className={`p-3 rounded-2xl flex flex-col gap-2 border transition-all ${
-                    isNeumorphic
-                      ? "neu-inset bg-slate-100"
-                      : isDark
-                      ? "bg-[#202024] border-[#2E2E32]"
-                      : "bg-white border-2 border-[#1E1B18]"
-                  }`}
+                  className="p-3 rounded-2xl flex flex-col gap-2.5 apple-surface-muted"
                 >
                   <div className="flex items-center gap-2">
-                    <Search className="w-4 h-4 text-zinc-400 ml-1 shrink-0" />
+                    <Search className="w-4 h-4 text-[#86868B] ml-1 shrink-0" />
                     <input
                       id="input-friend-handle-search"
                       type="text"
                       value={searchHandle}
                       onChange={(e) => setSearchHandle(e.target.value)}
-                      placeholder="Enter cadet @handle (e.g. @sophia_ml)..."
-                      className="w-full bg-transparent text-xs font-mono outline-none placeholder:text-zinc-500"
+                      placeholder="Invite by @handle (e.g. @sophia_ml)"
+                      className="w-full bg-transparent text-xs outline-none placeholder:text-[#86868B]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNoteInput(!showNoteInput)}
-                      className={`text-[10px] font-mono font-bold px-2 py-1 rounded-lg border transition-all ${
+                      className={`text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors whitespace-nowrap ${
                         showNoteInput
-                          ? "bg-amber-400/20 text-amber-400 border-amber-400/40"
-                          : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border-transparent"
+                          ? "bg-[#0071E3]/15 text-[#0071E3] dark:text-[#2997FF]"
+                          : isDark
+                          ? "text-zinc-400 hover:text-zinc-200"
+                          : "text-[#6E6E73] hover:text-[#1D1D1F]"
                       }`}
                     >
                       {showNoteInput ? "Note ✓" : "+ Note"}
                     </button>
                     <button
                       type="submit"
-                      className={`px-3 py-1.5 rounded-xl font-mono font-black text-xs uppercase flex items-center gap-1.5 shrink-0 transition-all ${
-                        isNeumorphic
-                          ? "neu-btn-primary text-white"
-                          : isDark
-                          ? "bg-amber-400 text-zinc-950 font-bold"
-                          : "bg-[#4F46E5] text-white border border-[#1E1B18]"
-                      }`}
+                      className="px-3.5 py-1.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white font-medium text-xs flex items-center gap-1.5 shrink-0 whitespace-nowrap transition-colors"
                     >
                       <UserPlus className="w-3.5 h-3.5" />
-                      <span>Send Request</span>
+                      <span>Invite</span>
                     </button>
                   </div>
                   {showNoteInput && (
@@ -489,162 +496,176 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                       type="text"
                       value={customNote}
                       onChange={(e) => setCustomNote(e.target.value)}
-                      placeholder="Add an optional study invite note (e.g. 'Let's collaborate on RAG systems!')..."
-                      className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none border transition-all ${
-                        isDark ? "bg-zinc-900 border-zinc-800 text-zinc-200" : "bg-zinc-50 border-zinc-200 text-zinc-800"
+                      placeholder="Optional note (e.g. 'Let's practice RAG concepts together')"
+                      className={`w-full px-3 py-2 rounded-xl text-xs outline-none border ${
+                        isDark
+                          ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-100 placeholder-zinc-500"
+                          : "bg-white border-black/[0.08] text-[#1D1D1F] placeholder-[#86868B]"
                       }`}
                     />
                   )}
                 </form>
 
-                {/* Friends List Cards */}
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between text-[11px] font-mono font-bold text-zinc-500 px-1">
-                    <span>CADET DIRECTORY ({friends.length})</span>
-                    <span>{mutualFriends.length} MUTUAL PARTNERS</span>
+                {/* Friends Directory List */}
+                <div className="space-y-2">
+                  <div
+                    className={`flex items-center justify-between text-xs px-1 ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                    }`}
+                  >
+                    <span className="font-medium">Directory ({friends.length})</span>
+                    <span className="font-mono tabular-nums">{mutualFriends.length} partners</span>
                   </div>
 
-                  {friends.map((f) => {
-                    const status = socialService.getUserRelationshipStatus(f.id);
-                    return (
-                      <div
-                        key={f.id}
-                        className={`p-3.5 rounded-2xl flex items-center justify-between gap-3 transition-all ${
-                          isNeumorphic
-                            ? "neu-flat text-slate-800"
-                            : isDark
-                            ? "bg-[#202024] border border-[#2E2E32] text-zinc-200"
-                            : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono font-black text-sm ${
-                                isNeumorphic
-                                  ? "neu-inset text-indigo-600"
-                                  : isDark
-                                  ? "bg-zinc-800 text-amber-400 border border-zinc-700"
-                                  : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
-                              }`}
-                            >
-                              {f.avatarLetter}
+                  <div
+                    className={`rounded-2xl divide-y border ${
+                      isDark
+                        ? "bg-[#2C2C2E]/40 border-white/[0.06] divide-white/[0.06]"
+                        : "bg-[#F5F5F7]/70 border-black/[0.05] divide-black/[0.05]"
+                    }`}
+                  >
+                    {friends.map((f) => {
+                      const status = socialService.getUserRelationshipStatus(f.id);
+                      return (
+                        <div key={f.id} className="p-3.5 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="relative shrink-0">
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-display font-semibold text-sm ${
+                                  isDark
+                                    ? "bg-[#2997FF]/15 text-[#2997FF]"
+                                    : "bg-[#0071E3]/10 text-[#0071E3]"
+                                }`}
+                              >
+                                {f.avatarLetter}
+                              </div>
+                              <span
+                                className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 ${
+                                  isDark ? "border-[#1C1C1E]" : "border-[#F5F5F7]"
+                                } ${
+                                  f.status === "online" || f.status === "in_quest"
+                                    ? "bg-emerald-500"
+                                    : f.status === "studying"
+                                    ? "bg-amber-500"
+                                    : "bg-zinc-400"
+                                }`}
+                              />
                             </div>
-                            <span
-                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${
-                                isDark ? "border-[#202024]" : "border-white"
-                              } ${
-                                f.status === "online" || f.status === "in_quest"
-                                  ? "bg-emerald-500"
-                                  : f.status === "studying"
-                                  ? "bg-amber-500"
-                                  : "bg-zinc-400"
-                              }`}
-                            />
+
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-sm">{f.name}</span>
+                                <span className={`text-xs ${isDark ? "text-zinc-400" : "text-[#6E6E73]"}`}>
+                                  @{f.username}
+                                </span>
+                              </div>
+                              <div
+                                className={`flex items-center gap-1.5 text-[11px] font-mono tabular-nums mt-0.5 ${
+                                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                                }`}
+                              >
+                                <span>Lvl {f.level}</span>
+                                <span>·</span>
+                                <span className="flex items-center gap-0.5 text-orange-500">
+                                  <Flame className="w-3 h-3" /> {f.streakDays}d
+                                </span>
+                                <span>·</span>
+                                <span className="font-sans truncate">{f.role}</span>
+                              </div>
+                              {f.activeQuestTitle && (
+                                <div
+                                  className={`text-[11px] line-clamp-1 mt-0.5 ${
+                                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                                  }`}
+                                >
+                                  Studying:{" "}
+                                  <span className="text-[#0071E3] dark:text-[#2997FF] font-medium">
+                                    {f.activeQuestTitle}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
 
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-black text-xs">{f.name}</span>
-                              <span className="text-[11px] font-mono text-zinc-500">@{f.username}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400 mt-0.5">
-                              <span className="text-amber-500 font-bold">LVL {f.level}</span>
-                              <span>•</span>
-                              <span className="flex items-center gap-0.5 text-orange-500 font-bold">
-                                <Flame className="w-3 h-3" /> {f.streakDays}d
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {f.isMutual ? (
+                              <>
+                                <button
+                                  onClick={() => handleNudge(f)}
+                                  title="Send study boost"
+                                  className={`p-2 rounded-full transition-colors border ${
+                                    isDark
+                                      ? "bg-[#1C1C1E] border-white/[0.08] text-amber-400 hover:bg-[#2C2C2E]"
+                                      : "bg-white border-black/[0.06] text-amber-600 hover:bg-amber-50"
+                                  }`}
+                                >
+                                  <Zap className="w-3.5 h-3.5" />
+                                </button>
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap ${
+                                    isDark
+                                      ? "bg-emerald-500/15 text-emerald-300"
+                                      : "bg-emerald-50 text-emerald-700"
+                                  }`}
+                                >
+                                  Partner
+                                </span>
+                              </>
+                            ) : status === "pending_outgoing" ? (
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-medium flex items-center gap-1 whitespace-nowrap ${
+                                  isDark
+                                    ? "bg-white/[0.08] text-zinc-300"
+                                    : "bg-black/[0.05] text-[#6E6E73]"
+                                }`}
+                              >
+                                <Clock className="w-3 h-3" />
+                                <span>Sent</span>
                               </span>
-                              <span>•</span>
-                              <span>{f.role}</span>
-                            </div>
-                            {f.activeQuestTitle && (
-                              <div className="text-[10px] font-mono text-zinc-500 line-clamp-1 mt-0.5">
-                                Studying: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{f.activeQuestTitle}</span>
-                              </div>
+                            ) : status === "pending_incoming" ? (
+                              <button
+                                onClick={() => {
+                                  soundFx.playTap();
+                                  setActiveTab("requests");
+                                  setRequestsSubTab("incoming");
+                                }}
+                                className="px-3 py-1.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-medium flex items-center gap-1 whitespace-nowrap transition-colors"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>Review</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  soundFx.playTap();
+                                  socialService.sendFriendRequest(f.username, {
+                                    id: user.id || "you",
+                                    fullName: user.fullName || "Cadet",
+                                    username: user.fullName
+                                      ? user.fullName.toLowerCase().replace(/\s+/g, "_")
+                                      : "cadet_current",
+                                    level: user.level || 1,
+                                  });
+                                  setActionNotice({
+                                    type: "success",
+                                    text: `Friend request sent to @${f.username}`,
+                                  });
+                                  setTimeout(() => setActionNotice(null), 3000);
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap border ${
+                                  isDark
+                                    ? "bg-[#1C1C1E] text-zinc-200 hover:bg-[#2C2C2E] border-white/[0.08]"
+                                    : "bg-white text-[#1D1D1F] hover:bg-black/[0.03] border-black/[0.08]"
+                                }`}
+                              >
+                                + Add
+                              </button>
                             )}
                           </div>
                         </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-1.5">
-                          {f.isMutual ? (
-                            <>
-                              <button
-                                onClick={() => handleNudge(f)}
-                                title="Send study energy boost"
-                                className={`p-2 rounded-xl text-xs font-mono font-bold transition-all ${
-                                  isNeumorphic
-                                    ? "neu-raised text-amber-600 hover:text-amber-700"
-                                    : isDark
-                                    ? "bg-zinc-800 text-amber-400 hover:bg-zinc-700 border border-zinc-700"
-                                    : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
-                                }`}
-                              >
-                                <Zap className="w-3.5 h-3.5" />
-                              </button>
-                              <span
-                                className={`px-2.5 py-1.5 rounded-xl font-mono text-[11px] font-bold ${
-                                  isDark
-                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                    : "bg-emerald-50 text-emerald-700 border border-emerald-300"
-                                }`}
-                              >
-                                Partner ✓
-                              </span>
-                            </>
-                          ) : status === "pending_outgoing" ? (
-                            <span
-                              className={`px-2.5 py-1.5 rounded-xl font-mono text-[11px] font-bold flex items-center gap-1 ${
-                                isDark
-                                  ? "bg-amber-400/10 text-amber-300 border border-amber-400/20"
-                                  : "bg-amber-50 text-amber-800 border border-amber-200"
-                              }`}
-                            >
-                              <Clock className="w-3 h-3 animate-spin" />
-                              <span>Sent ⏳</span>
-                            </span>
-                          ) : status === "pending_incoming" ? (
-                            <button
-                              onClick={() => {
-                                soundFx.playTap();
-                                setActiveTab("requests");
-                                setRequestsSubTab("incoming");
-                              }}
-                              className={`px-2.5 py-1.5 rounded-xl font-mono text-[11px] font-bold flex items-center gap-1 transition-all ${
-                                isDark
-                                  ? "bg-amber-400 text-zinc-950 font-bold"
-                                  : "bg-[#4F46E5] text-white"
-                              }`}
-                            >
-                              <UserCheck className="w-3 h-3" />
-                              <span>Review</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                soundFx.playTap();
-                                socialService.sendFriendRequest(f.username, {
-                                  id: user.id || "you",
-                                  fullName: user.fullName || "Cadet",
-                                  username: user.fullName ? user.fullName.toLowerCase().replace(/\s+/g, "_") : "cadet_current",
-                                  level: user.level || 1,
-                                });
-                                setActionNotice({ type: "success", text: `Friend request sent to @${f.username}!` });
-                                setTimeout(() => setActionNotice(null), 3000);
-                              }}
-                              className={`px-2.5 py-1.5 rounded-xl font-mono text-[11px] font-bold transition-all ${
-                                isDark
-                                  ? "bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700"
-                                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 border border-zinc-300"
-                              }`}
-                            >
-                              + Request
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
@@ -652,28 +673,21 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
             {/* 3. FRIEND REQUESTS TAB */}
             {activeTab === "requests" && (
               <div className="space-y-4">
-                {/* Send Request Form */}
                 <form
                   onSubmit={handleSendFriendRequest}
-                  className={`p-3 sm:p-4 rounded-2xl flex flex-col gap-2.5 border transition-all ${
-                    isNeumorphic
-                      ? "neu-inset bg-slate-100"
-                      : isDark
-                      ? "bg-[#202024] border-[#2E2E32]"
-                      : "bg-white border-2 border-[#1E1B18]"
-                  }`}
+                  className="p-4 rounded-2xl flex flex-col gap-2.5 apple-surface-muted"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold uppercase flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-                      <SendHorizonal className="w-3.5 h-3.5" />
-                      <span>Send New Friend Request</span>
+                    <span className="text-xs font-semibold flex items-center gap-1.5">
+                      <SendHorizonal className="w-3.5 h-3.5 text-[#0071E3] dark:text-[#2997FF]" />
+                      <span>Send Study Partner Request</span>
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowNoteInput(!showNoteInput)}
-                      className="text-[10px] font-mono text-zinc-500 hover:underline"
+                      className="text-xs text-[#0071E3] dark:text-[#2997FF] hover:underline"
                     >
-                      {showNoteInput ? "Hide note field" : "+ Add custom note"}
+                      {showNoteInput ? "Hide note" : "+ Add note"}
                     </button>
                   </div>
 
@@ -683,18 +697,16 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                       type="text"
                       value={searchHandle}
                       onChange={(e) => setSearchHandle(e.target.value)}
-                      placeholder="Cadet @username (e.g. @marcus_v, @tariq_dev)..."
-                      className="w-full bg-transparent text-xs font-mono outline-none placeholder:text-zinc-500"
+                      placeholder="Enter @username (e.g. @marcus_v, @tariq_dev)"
+                      className={`flex-1 px-3 py-2 rounded-xl text-xs outline-none border ${
+                        isDark
+                          ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-100 placeholder-zinc-500"
+                          : "bg-white border-black/[0.08] text-[#1D1D1F] placeholder-[#86868B]"
+                      }`}
                     />
                     <button
                       type="submit"
-                      className={`px-3.5 py-1.5 rounded-xl font-mono font-black text-xs uppercase flex items-center gap-1.5 shrink-0 transition-all ${
-                        isNeumorphic
-                          ? "neu-btn-primary text-white"
-                          : isDark
-                          ? "bg-amber-400 text-zinc-950 font-bold"
-                          : "bg-[#4F46E5] text-white border border-[#1E1B18]"
-                      }`}
+                      className="px-4 py-2 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white font-medium text-xs flex items-center gap-1.5 shrink-0 whitespace-nowrap transition-colors"
                     >
                       <UserPlus className="w-3.5 h-3.5" />
                       <span>Send</span>
@@ -706,31 +718,29 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                       type="text"
                       value={customNote}
                       onChange={(e) => setCustomNote(e.target.value)}
-                      placeholder="Add an invitation note (e.g. 'Looking to swap system prompt templates!')..."
-                      className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none border transition-all ${
-                        isDark ? "bg-zinc-900 border-zinc-800 text-zinc-200" : "bg-zinc-50 border-zinc-200 text-zinc-800"
+                      placeholder="Invitation note (e.g. 'Let's collaborate on prompt workflows')"
+                      className={`w-full px-3 py-2 rounded-xl text-xs outline-none border ${
+                        isDark
+                          ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-100 placeholder-zinc-500"
+                          : "bg-white border-black/[0.08] text-[#1D1D1F] placeholder-[#86868B]"
                       }`}
                     />
                   )}
                 </form>
 
-                {/* Sub-Tabs: Incoming / Sent / History */}
-                <div
-                  className={`flex items-center gap-2 border-b pb-2 text-xs font-mono font-bold ${
-                    isDark ? "border-zinc-800" : "border-zinc-200"
-                  }`}
-                >
+                {/* Sub-Tabs */}
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => {
                       soundFx.playTap();
                       setRequestsSubTab("incoming");
                     }}
-                    className={`px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                       requestsSubTab === "incoming"
-                        ? isDark
-                          ? "bg-amber-400 text-zinc-950 font-black"
-                          : "bg-[#4F46E5] text-white"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "bg-[#0071E3] text-white"
+                        : isDark
+                        ? "text-zinc-400 hover:bg-white/[0.06]"
+                        : "text-[#6E6E73] hover:bg-black/[0.05]"
                     }`}
                   >
                     <Inbox className="w-3.5 h-3.5" />
@@ -742,16 +752,16 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                       soundFx.playTap();
                       setRequestsSubTab("outgoing");
                     }}
-                    className={`px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                       requestsSubTab === "outgoing"
-                        ? isDark
-                          ? "bg-amber-400 text-zinc-950 font-black"
-                          : "bg-[#4F46E5] text-white"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "bg-[#0071E3] text-white"
+                        : isDark
+                        ? "text-zinc-400 hover:bg-white/[0.06]"
+                        : "text-[#6E6E73] hover:bg-black/[0.05]"
                     }`}
                   >
                     <SendHorizonal className="w-3.5 h-3.5" />
-                    <span>Sent / Pending ({pendingOutgoingCount})</span>
+                    <span>Sent ({pendingOutgoingCount})</span>
                   </button>
 
                   <button
@@ -759,12 +769,12 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                       soundFx.playTap();
                       setRequestsSubTab("history");
                     }}
-                    className={`px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap ${
                       requestsSubTab === "history"
-                        ? isDark
-                          ? "bg-amber-400 text-zinc-950 font-black"
-                          : "bg-[#4F46E5] text-white"
-                        : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                        ? "bg-[#0071E3] text-white"
+                        : isDark
+                        ? "text-zinc-400 hover:bg-white/[0.06]"
+                        : "text-[#6E6E73] hover:bg-black/[0.05]"
                     }`}
                   >
                     <History className="w-3.5 h-3.5" />
@@ -772,91 +782,81 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                   </button>
                 </div>
 
-                {/* SubTab 1: Incoming Requests */}
+                {/* Incoming */}
                 {requestsSubTab === "incoming" && (
-                  <div className="space-y-3">
-                    {friendRequests.filter((r) => r.status === "pending" && r.direction === "incoming").length === 0 ? (
-                      <div className="py-8 text-center space-y-2">
-                        <div className="w-10 h-10 mx-auto rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                  <div className="space-y-2.5">
+                    {friendRequests.filter((r) => r.status === "pending" && r.direction === "incoming")
+                      .length === 0 ? (
+                      <div className="py-10 text-center space-y-2">
+                        <div className="w-10 h-10 mx-auto rounded-full apple-surface-muted flex items-center justify-center text-[#86868B]">
                           <Inbox className="w-5 h-5" />
                         </div>
-                        <div className="font-mono text-xs font-bold text-zinc-500">No pending incoming friend requests.</div>
-                        <p className="font-mono text-[11px] text-zinc-400">
-                          Share your @handle or send requests to peers in the Cadet Directory!
+                        <div className="text-sm font-medium">No incoming requests</div>
+                        <p className={`text-xs ${isDark ? "text-zinc-400" : "text-[#6E6E73]"}`}>
+                          Invite peers from the Partners tab to study together.
                         </p>
                       </div>
                     ) : (
                       friendRequests
                         .filter((r) => r.status === "pending" && r.direction === "incoming")
                         .map((req) => (
-                          <motion.div
-                            key={req.id}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`p-4 rounded-2xl transition-all ${
-                              isNeumorphic
-                                ? "neu-flat text-slate-800"
-                                : isDark
-                                ? "bg-[#202024] border border-[#2E2E32] text-zinc-200"
-                                : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                            }`}
-                          >
+                          <div key={req.id} className="p-4 rounded-2xl apple-surface-muted">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div className="flex items-start gap-3">
                                 <div
-                                  className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono font-black text-sm shrink-0 ${
-                                    isNeumorphic
-                                      ? "neu-inset text-indigo-600"
-                                      : isDark
-                                      ? "bg-zinc-800 text-amber-400 border border-zinc-700"
-                                      : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
+                                  className={`w-10 h-10 rounded-full flex items-center justify-center font-display font-semibold text-sm shrink-0 ${
+                                    isDark
+                                      ? "bg-[#2997FF]/15 text-[#2997FF]"
+                                      : "bg-[#0071E3]/10 text-[#0071E3]"
                                   }`}
                                 >
                                   {req.fromAvatarLetter}
                                 </div>
                                 <div>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-black text-xs">{req.fromUserName}</span>
-                                    <span className="text-[11px] font-mono text-zinc-500">@{req.fromUsername}</span>
-                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-bold">
-                                      LVL {req.fromLevel}
+                                  <div className="flex items-center gap-1.5 flex-wrap text-xs">
+                                    <span className="font-semibold text-sm">{req.fromUserName}</span>
+                                    <span className={isDark ? "text-zinc-400" : "text-[#6E6E73]"}>
+                                      @{req.fromUsername}
                                     </span>
-                                    <span className="text-[10px] font-mono text-zinc-400">• {req.timestamp}</span>
+                                    <span className="text-[#86868B]">·</span>
+                                    <span className="font-mono tabular-nums text-[#0071E3] dark:text-[#2997FF] font-medium">
+                                      Lvl {req.fromLevel}
+                                    </span>
+                                    <span className="text-[#86868B]">· {req.timestamp}</span>
                                   </div>
-                                  <div className="text-[11px] font-mono text-zinc-400 mt-0.5">{req.fromRole}</div>
+                                  <div className={`text-xs mt-0.5 ${isDark ? "text-zinc-400" : "text-[#6E6E73]"}`}>
+                                    {req.fromRole}
+                                  </div>
                                   {req.note && (
-                                    <p className={`text-xs mt-1.5 p-2 rounded-xl italic ${
-                                      isDark ? "bg-zinc-900 text-zinc-300" : "bg-zinc-50 text-zinc-700"
-                                    }`}>
+                                    <p
+                                      className={`text-xs mt-2 p-2.5 rounded-xl border ${
+                                        isDark
+                                          ? "bg-[#1C1C1E] border-white/[0.06] text-zinc-300"
+                                          : "bg-white border-black/[0.06] text-[#1D1D1F]"
+                                      }`}
+                                    >
                                       "{req.note}"
                                     </p>
                                   )}
                                 </div>
                               </div>
 
-                              {/* Actions: Accept & Decline */}
                               <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                                 <button
                                   id={`btn-accept-request-${req.id}`}
                                   onClick={() => handleAcceptRequest(req.id)}
-                                  className={`px-3 py-1.5 rounded-xl font-mono text-xs font-black flex items-center gap-1.5 transition-all ${
-                                    isNeumorphic
-                                      ? "neu-btn-primary text-white"
-                                      : isDark
-                                      ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
-                                      : "bg-emerald-600 text-white border border-[#1E1B18]"
-                                  }`}
+                                  className="px-3.5 py-1.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-medium flex items-center gap-1.5 whitespace-nowrap transition-colors"
                                 >
                                   <UserCheck className="w-3.5 h-3.5" />
-                                  <span>Accept 🤝</span>
+                                  <span>Accept</span>
                                 </button>
                                 <button
                                   id={`btn-decline-request-${req.id}`}
                                   onClick={() => handleDeclineRequest(req.id)}
-                                  className={`px-2.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all ${
+                                  className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 whitespace-nowrap transition-colors border ${
                                     isDark
-                                      ? "bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-700"
-                                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 border border-zinc-300"
+                                      ? "bg-[#1C1C1E] text-zinc-300 hover:bg-[#2C2C2E] border-white/[0.08]"
+                                      : "bg-white text-[#6E6E73] hover:text-[#1D1D1F] border-black/[0.08]"
                                   }`}
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -864,64 +864,61 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                                 </button>
                               </div>
                             </div>
-                          </motion.div>
+                          </div>
                         ))
                     )}
                   </div>
                 )}
 
-                {/* SubTab 2: Outgoing / Sent Requests */}
+                {/* Outgoing */}
                 {requestsSubTab === "outgoing" && (
-                  <div className="space-y-3">
-                    {friendRequests.filter((r) => r.status === "pending" && r.direction === "outgoing").length === 0 ? (
-                      <div className="py-8 text-center space-y-2">
-                        <div className="w-10 h-10 mx-auto rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                  <div className="space-y-2.5">
+                    {friendRequests.filter((r) => r.status === "pending" && r.direction === "outgoing")
+                      .length === 0 ? (
+                      <div className="py-10 text-center space-y-2">
+                        <div className="w-10 h-10 mx-auto rounded-full apple-surface-muted flex items-center justify-center text-[#86868B]">
                           <SendHorizonal className="w-5 h-5" />
                         </div>
-                        <div className="font-mono text-xs font-bold text-zinc-500">No pending sent requests.</div>
-                        <p className="font-mono text-[11px] text-zinc-400">
-                          Type a cadet @handle above to invite them to your squad!
+                        <div className="text-sm font-medium">No pending sent requests</div>
+                        <p className={`text-xs ${isDark ? "text-zinc-400" : "text-[#6E6E73]"}`}>
+                          Enter a @handle above to invite a peer to your squad.
                         </p>
                       </div>
                     ) : (
                       friendRequests
                         .filter((r) => r.status === "pending" && r.direction === "outgoing")
                         .map((req) => (
-                          <motion.div
+                          <div
                             key={req.id}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`p-4 rounded-2xl flex items-center justify-between gap-3 transition-all ${
-                              isNeumorphic
-                                ? "neu-flat text-slate-800"
-                                : isDark
-                                ? "bg-[#202024] border border-[#2E2E32] text-zinc-200"
-                                : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                            }`}
+                            className="p-4 rounded-2xl flex items-center justify-between gap-3 apple-surface-muted"
                           >
                             <div className="flex items-center gap-3">
                               <div
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center font-mono font-black text-sm shrink-0 ${
-                                  isNeumorphic
-                                    ? "neu-inset text-indigo-600"
-                                    : isDark
-                                    ? "bg-zinc-800 text-amber-400 border border-zinc-700"
-                                    : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-display font-semibold text-sm shrink-0 ${
+                                  isDark
+                                    ? "bg-[#2997FF]/15 text-[#2997FF]"
+                                    : "bg-[#0071E3]/10 text-[#0071E3]"
                                 }`}
                               >
                                 {req.toUsername.charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-black text-xs">{req.toUserName}</span>
-                                  <span className="text-[11px] font-mono text-zinc-500">@{req.toUsername}</span>
+                                <div className="flex items-center gap-1.5 text-xs">
+                                  <span className="font-semibold text-sm">{req.toUserName}</span>
+                                  <span className={isDark ? "text-zinc-400" : "text-[#6E6E73]"}>
+                                    @{req.toUsername}
+                                  </span>
                                 </div>
-                                <div className="flex items-center gap-1.5 text-[10px] font-mono text-amber-500 mt-0.5">
-                                  <Clock className="w-3 h-3 animate-spin" />
-                                  <span>Pending Approval • {req.timestamp}</span>
+                                <div
+                                  className={`flex items-center gap-1 text-[11px] mt-0.5 ${
+                                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                                  }`}
+                                >
+                                  <Clock className="w-3 h-3" />
+                                  <span>Pending · {req.timestamp}</span>
                                 </div>
                                 {req.note && (
-                                  <p className="text-[11px] text-zinc-400 mt-1 italic">
+                                  <p className={`text-xs mt-1 italic ${isDark ? "text-zinc-400" : "text-[#6E6E73]"}`}>
                                     "{req.note}"
                                   </p>
                                 )}
@@ -931,54 +928,54 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                             <button
                               id={`btn-cancel-request-${req.id}`}
                               onClick={() => handleCancelRequest(req.id)}
-                              className={`px-2.5 py-1.5 rounded-xl font-mono text-xs font-bold transition-all ${
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 transition-colors border ${
                                 isDark
-                                  ? "bg-zinc-800 text-zinc-400 hover:text-rose-400 border border-zinc-700"
-                                  : "bg-zinc-100 text-zinc-600 hover:text-rose-600 border border-zinc-300"
+                                  ? "bg-[#1C1C1E] text-zinc-300 hover:text-rose-400 border-white/[0.08]"
+                                  : "bg-white text-[#6E6E73] hover:text-rose-600 border-black/[0.08]"
                               }`}
                             >
                               <X className="w-3.5 h-3.5" />
                               <span>Cancel</span>
                             </button>
-                          </motion.div>
+                          </div>
                         ))
                     )}
                   </div>
                 )}
 
-                {/* SubTab 3: Request History */}
+                {/* History */}
                 {requestsSubTab === "history" && (
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {historyRequests.length === 0 ? (
-                      <div className="py-8 text-center text-xs font-mono text-zinc-500">
-                        No previous friend request history.
+                      <div className={`py-8 text-center text-xs ${isDark ? "text-zinc-400" : "text-[#6E6E73]"}`}>
+                        No request history yet.
                       </div>
                     ) : (
                       historyRequests.map((req) => (
                         <div
                           key={req.id}
-                          className={`p-3 rounded-xl flex items-center justify-between gap-2 text-xs font-mono opacity-80 ${
-                            isDark ? "bg-zinc-900/60 border border-zinc-800 text-zinc-300" : "bg-zinc-50 border border-zinc-200 text-zinc-700"
-                          }`}
+                          className="p-3.5 rounded-2xl flex items-center justify-between gap-2 text-xs apple-surface-muted"
                         >
+                          <span>
+                            {req.direction === "incoming"
+                              ? `From @${req.fromUsername}`
+                              : `To @${req.toUsername}`}
+                          </span>
                           <div className="flex items-center gap-2">
-                            <span>
-                              {req.direction === "incoming" ? `From @${req.fromUsername}` : `To @${req.toUsername}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                              className={`text-[11px] px-2 py-0.5 rounded-full font-medium capitalize ${
                                 req.status === "accepted"
-                                  ? "bg-emerald-500/20 text-emerald-400"
+                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                                   : req.status === "declined"
-                                  ? "bg-rose-500/20 text-rose-400"
-                                  : "bg-zinc-500/20 text-zinc-400"
+                                  ? "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                                  : "bg-zinc-500/15 text-zinc-500"
                               }`}
                             >
                               {req.status}
                             </span>
-                            <span className="text-[10px] text-zinc-500">{req.timestamp}</span>
+                            <span className={isDark ? "text-zinc-500" : "text-[#86868B]"}>
+                              {req.timestamp}
+                            </span>
                           </div>
                         </div>
                       ))
@@ -995,21 +992,21 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                   {partyMessages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`p-3 rounded-2xl text-xs space-y-1 ${
+                      className={`p-3.5 rounded-2xl text-xs space-y-1 ${
                         msg.type === "nudge"
-                          ? "bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400"
-                          : isNeumorphic
-                          ? "neu-flat text-slate-800"
-                          : isDark
-                          ? "bg-[#202024] border border-[#2E2E32] text-zinc-200"
-                          : "bg-white border-2 border-[#1E1B18] text-[#1E1B18]"
+                          ? isDark
+                            ? "bg-amber-500/10 border border-amber-500/20 text-amber-300"
+                            : "bg-amber-50 border border-amber-200 text-amber-800"
+                          : "apple-surface-muted"
                       }`}
                     >
-                      <div className="flex items-center justify-between text-[10px] font-mono opacity-80">
-                        <span className="font-black">{msg.userName}</span>
-                        <span>{msg.timestamp}</span>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-semibold">{msg.userName}</span>
+                        <span className={isDark ? "text-zinc-500" : "text-[#86868B]"}>
+                          {msg.timestamp}
+                        </span>
                       </div>
-                      <p className="font-sans leading-relaxed">{msg.text}</p>
+                      <p className="text-[13px] leading-relaxed">{msg.text}</p>
                     </div>
                   ))}
                 </div>
@@ -1021,24 +1018,16 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                     type="text"
                     value={partyInput}
                     onChange={(e) => setPartyInput(e.target.value)}
-                    placeholder="Drop a study tip, motivation, or ask the squad..."
-                    className={`flex-1 px-3 py-2 rounded-xl text-xs font-mono outline-none border transition-all ${
-                      isNeumorphic
-                        ? "neu-inset bg-slate-100"
-                        : isDark
-                        ? "bg-[#202024] border-[#2E2E32] text-zinc-100"
-                        : "bg-white border-2 border-[#1E1B18] text-[#1E1B18]"
+                    placeholder="Share a study tip or message the squad..."
+                    className={`flex-1 px-4 py-2.5 rounded-full text-xs outline-none border ${
+                      isDark
+                        ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-100 placeholder-zinc-500 focus:border-[#2997FF]"
+                        : "bg-white border-black/[0.08] text-[#1D1D1F] placeholder-[#86868B] focus:border-[#0071E3]"
                     }`}
                   />
                   <button
                     type="submit"
-                    className={`px-3.5 py-2 rounded-xl font-mono font-black text-xs uppercase flex items-center gap-1.5 ${
-                      isNeumorphic
-                        ? "neu-btn-primary text-white"
-                        : isDark
-                        ? "bg-amber-400 text-zinc-950 font-bold"
-                        : "bg-[#4F46E5] text-white border-2 border-[#1E1B18]"
-                    }`}
+                    className="px-4 py-2.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white font-medium text-xs flex items-center gap-1.5 shrink-0 whitespace-nowrap transition-colors"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Send</span>
@@ -1048,20 +1037,21 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
             )}
           </div>
 
-          {/* Footer stats */}
+          {/* Footer */}
           <div
-            className={`p-3 sm:px-6 flex items-center justify-between text-[11px] font-mono border-t ${
-              isNeumorphic
-                ? "border-slate-300/80 bg-slate-100/60 text-slate-600"
-                : isDark
-                ? "border-[#27272A] bg-[#202024] text-zinc-400"
-                : "border-[#1E1B18] bg-[#FAF5EE] text-zinc-600"
+            className={`px-6 py-3 flex items-center justify-between text-xs border-t apple-glass ${
+              isDark ? "border-white/[0.08] text-zinc-400" : "border-black/[0.06] text-[#6E6E73]"
             }`}
           >
-            <div className="flex items-center gap-3">
-              <span>🤝 {mutualFriends.length} Connected Partners</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono tabular-nums">{mutualFriends.length} partners</span>
               {pendingIncomingCount > 0 && (
-                <span className="text-amber-500 font-bold">📬 {pendingIncomingCount} New Request{pendingIncomingCount > 1 ? "s" : ""}</span>
+                <>
+                  <span>·</span>
+                  <span className="text-[#0071E3] dark:text-[#2997FF] font-medium">
+                    {pendingIncomingCount} new request{pendingIncomingCount > 1 ? "s" : ""}
+                  </span>
+                </>
               )}
             </div>
             <button
@@ -1069,7 +1059,7 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
                 soundFx.playTap();
                 onClose();
               }}
-              className="font-bold hover:underline"
+              className="font-medium text-[#0071E3] dark:text-[#2997FF] hover:underline"
             >
               Done
             </button>
@@ -1079,4 +1069,3 @@ export const FriendsFeedModal: React.FC<FriendsFeedModalProps> = ({
     </AnimatePresence>
   );
 };
-

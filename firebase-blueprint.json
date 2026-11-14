@@ -1,0 +1,252 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated learner profile, preferences, and curriculum progress stored per user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email address (owner-private PII)",
+          "maxLength": 254
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Display name of the learner",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique handle for the learner",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "age": {
+          "type": "number",
+          "description": "Optional learner age (no age restriction)"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Profile avatar URL or compressed data URI",
+          "maxLength": 200000
+        },
+        "level": {
+          "type": "number",
+          "description": "Current learner level"
+        },
+        "xp": {
+          "type": "number",
+          "description": "Total experience points earned"
+        },
+        "sparks": {
+          "type": "number",
+          "description": "Current Sparks currency balance"
+        },
+        "streakDays": {
+          "type": "number",
+          "description": "Consecutive active learning days"
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "ISO date string (YYYY-MM-DD) of last activity",
+          "maxLength": 32
+        },
+        "currentStageId": {
+          "type": "string",
+          "description": "Currently active curriculum stage identifier",
+          "maxLength": 64
+        },
+        "completedQuestIds": {
+          "type": "array",
+          "description": "List of completed quest IDs"
+        },
+        "inProgressQuestIds": {
+          "type": "array",
+          "description": "List of in-progress quest IDs"
+        },
+        "openedChests": {
+          "type": "array",
+          "description": "List of claimed milestone chest IDs"
+        },
+        "mascotRole": {
+          "type": "string",
+          "enum": ["detective", "focus", "builder", "data", "sage", "architect"],
+          "description": "Selected learning mascot role",
+          "maxLength": 32
+        },
+        "isPlus": {
+          "type": "boolean",
+          "description": "Whether Plus features are active"
+        },
+        "theme": {
+          "type": "string",
+          "enum": [
+            "neumorphic",
+            "riso-pop",
+            "warm-editorial",
+            "minimal-light",
+            "obsidian-noir",
+            "obsidian-gold",
+            "neon-matrix",
+            "cyber-dark"
+          ],
+          "description": "Selected visual theme",
+          "maxLength": 32
+        },
+        "questScores": {
+          "type": "object",
+          "description": "Map of questId to attempts and completion timestamp"
+        },
+        "skills": {
+          "type": "array",
+          "description": "List of skill mastery objects"
+        },
+        "achievements": {
+          "type": "array",
+          "description": "List of achievement objects"
+        },
+        "joinedDate": {
+          "type": "string",
+          "description": "Human-readable join date",
+          "maxLength": 64
+        },
+        "authProvider": {
+          "type": "string",
+          "description": "Authentication provider used",
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of document creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "fullName",
+        "username",
+        "avatarUrl",
+        "level",
+        "xp",
+        "sparks",
+        "streakDays",
+        "lastActiveDate",
+        "currentStageId",
+        "completedQuestIds",
+        "inProgressQuestIds",
+        "openedChests",
+        "mascotRole",
+        "isPlus",
+        "theme",
+        "questScores",
+        "skills",
+        "achievements",
+        "joinedDate",
+        "authProvider",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public non-PII learner statistics displayed on the League leaderboard.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the learner",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Public display name",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "username": {
+          "type": "string",
+          "description": "Public learner handle",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Public avatar image URL or compressed data URI",
+          "maxLength": 200000
+        },
+        "sparks": {
+          "type": "number",
+          "description": "Current Sparks score"
+        },
+        "xp": {
+          "type": "number",
+          "description": "Total XP score"
+        },
+        "level": {
+          "type": "number",
+          "description": "Current learner level"
+        },
+        "completedQuestsCount": {
+          "type": "number",
+          "description": "Count of completed quests"
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Whether entry is visible on the league leaderboard"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update"
+        }
+      },
+      "required": [
+        "uid",
+        "fullName",
+        "username",
+        "avatarUrl",
+        "sparks",
+        "xp",
+        "level",
+        "completedQuestsCount",
+        "isPublic",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Owner-private user profile, PII, preferences, and full learning progress."
+    },
+    "/leaderboard/{userId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Public non-PII league ranking document synced by the owner."
+    }
+  }
+}

@@ -21,23 +21,27 @@ export const CoursePickerModal: React.FC<CoursePickerModalProps> = ({
   onSelectCourse,
   theme = "neumorphic",
 }) => {
-  const isNeumorphic = theme === "neumorphic";
-  const isDark = theme === "obsidian-gold" || theme === "obsidian-noir";
+  const isDark =
+    theme === "obsidian-gold" ||
+    theme === "obsidian-noir" ||
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
 
   const getIcon = (iconName: string) => {
+    const colorClass = isDark ? "text-[#2997FF]" : "text-[#0071E3]";
     switch (iconName) {
       case "Cpu":
-        return <Cpu className={`w-5 h-5 ${isNeumorphic ? "text-indigo-600" : isDark ? "text-amber-400" : "text-[#4F46E5]"}`} />;
+        return <Cpu className={`w-5 h-5 ${colorClass}`} />;
       case "Bot":
-        return <Bot className={`w-5 h-5 ${isNeumorphic ? "text-indigo-600" : isDark ? "text-amber-400" : "text-[#4F46E5]"}`} />;
+        return <Bot className={`w-5 h-5 ${colorClass}`} />;
       case "Sparkles":
-        return <Sparkles className={`w-5 h-5 ${isNeumorphic ? "text-amber-600" : isDark ? "text-amber-400" : "text-[#EA580C]"}`} />;
+        return <Sparkles className="w-5 h-5 text-amber-500" />;
       case "Film":
-        return <Film className={`w-5 h-5 ${isNeumorphic ? "text-rose-600" : isDark ? "text-rose-400" : "text-[#E11D48]"}`} />;
+        return <Film className="w-5 h-5 text-rose-500" />;
       case "TrendingUp":
-        return <TrendingUp className={`w-5 h-5 ${isNeumorphic ? "text-emerald-600" : isDark ? "text-emerald-400" : "text-[#059669]"}`} />;
+        return <TrendingUp className="w-5 h-5 text-emerald-500" />;
       default:
-        return <BookOpen className={`w-5 h-5 ${isNeumorphic ? "text-indigo-600" : isDark ? "text-amber-400" : "text-[#4F46E5]"}`} />;
+        return <BookOpen className={`w-5 h-5 ${colorClass}`} />;
     }
   };
 
@@ -50,74 +54,61 @@ export const CoursePickerModal: React.FC<CoursePickerModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/45 backdrop-blur-sm"
           />
 
           {/* Dialog */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", stiffness: 350, damping: 26 }}
-            className={`relative z-10 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto transition-all ${
-              isNeumorphic
-                ? "neu-raised text-slate-800"
-                : isDark
-                ? "bg-[#18181B] border-2 border-[#3F3F46] shadow-2xl text-zinc-100"
-                : "bg-[#FFFDF9] border-2 border-[#1E1B18] shadow-[5px_5px_0px_#1E1B18] text-[#1E1B18]"
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative z-10 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 space-y-5 max-h-[85vh] overflow-y-auto apple-surface ${
+              isDark ? "text-zinc-100" : "text-[#1D1D1F]"
             }`}
           >
             {/* Header */}
             <div
-              className={`flex items-center justify-between pb-3 border-b ${
-                isNeumorphic
-                  ? "border-slate-300"
-                  : isDark
-                  ? "border-[#27272A]"
-                  : "border-[#1E1B18]"
+              className={`flex items-center justify-between pb-4 border-b ${
+                isDark ? "border-white/[0.08]" : "border-black/[0.06]"
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-                    isNeumorphic
-                      ? "neu-inset text-indigo-600"
-                      : isDark
-                      ? "bg-amber-400/10 border-2 border-amber-400 text-amber-300"
-                      : "bg-[#FEF08A] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
+                    isDark
+                      ? "bg-[#2997FF]/15 text-[#2997FF]"
+                      : "bg-[#0071E3]/10 text-[#0071E3]"
                   }`}
                 >
-                  <Bot className="w-5 h-5" />
+                  <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
                   <div
-                    className={`text-[10px] font-mono uppercase tracking-widest font-black ${
-                      isNeumorphic
-                        ? "text-indigo-600"
-                        : isDark
-                        ? "text-amber-400"
-                        : "text-[#4F46E5]"
+                    className={`text-[11px] font-medium uppercase tracking-wider ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
                     }`}
                   >
-                    CURRICULUM
+                    Curriculum
                   </div>
-                  <h2 className="text-lg font-black tracking-tight uppercase">Pick a course</h2>
+                  <h2 className="font-display text-lg font-semibold tracking-tight">
+                    Choose a Learning Track
+                  </h2>
                 </div>
               </div>
               <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.92 }}
                 onClick={onClose}
-                className={`p-1.5 rounded-xl transition-colors ${
-                  isNeumorphic
-                    ? "neu-btn text-slate-600 hover:text-slate-950"
-                    : isDark
-                    ? "border-2 border-[#3F3F46] text-zinc-400 hover:text-zinc-100"
-                    : "border-2 border-[#1E1B18] text-[#1E1B18] bg-white hover:bg-zinc-100"
+                aria-label="Close course picker"
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  isDark
+                    ? "bg-white/[0.08] text-zinc-300 hover:bg-white/[0.14]"
+                    : "bg-black/[0.05] text-[#6E6E73] hover:bg-black/[0.08] hover:text-[#1D1D1F]"
                 }`}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </motion.button>
             </div>
 
@@ -128,72 +119,58 @@ export const CoursePickerModal: React.FC<CoursePickerModalProps> = ({
                 return (
                   <motion.button
                     key={course.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.985 }}
                     onClick={() => {
                       soundFx.playTap();
                       onSelectCourse(course);
                       onClose();
                     }}
-                    className={`w-full text-left p-4 rounded-2xl transition-all flex items-start gap-3.5 ${
-                      isNeumorphic
-                        ? isSelected
-                          ? "neu-flat text-slate-900 ring-2 ring-indigo-500/50"
-                          : "neu-raised text-slate-700 hover:text-slate-950"
-                        : isSelected
+                    className={`w-full text-left p-4 rounded-2xl transition-all flex items-start gap-3.5 border ${
+                      isSelected
                         ? isDark
-                          ? "bg-[#27272A] border-2 border-amber-400 shadow-md"
-                          : "bg-[#EEF2FF] border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
+                          ? "bg-[#2997FF]/10 border-[#2997FF]/40"
+                          : "bg-[#0071E3]/[0.05] border-[#0071E3]/40"
                         : isDark
-                        ? "bg-[#27272A]/50 border-2 border-[#3F3F46] hover:border-zinc-500 text-zinc-300"
-                        : "bg-white border-2 border-[#1E1B18]/30 hover:border-[#1E1B18] text-[#1E1B18]"
+                        ? "bg-[#2C2C2E]/60 border-white/[0.06] hover:bg-[#2C2C2E]"
+                        : "bg-[#F5F5F7] border-black/[0.04] hover:bg-[#ECECF1]"
                     }`}
                   >
                     <div
-                      className={`p-2.5 rounded-xl shrink-0 ${
-                        isNeumorphic
-                          ? isSelected
-                            ? "neu-inset text-indigo-600"
-                            : "neu-flat text-slate-600"
-                          : isSelected
-                          ? isDark
-                            ? "bg-amber-400/20 border border-amber-400/40"
-                            : "bg-[#FEF08A] border border-[#1E1B18]"
-                          : isDark
-                          ? "bg-[#18181B] border border-[#3F3F46]"
-                          : "bg-[#FFFDF9] border border-zinc-200"
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        isDark ? "bg-[#1C1C1E]" : "bg-white shadow-xs"
                       }`}
                     >
                       {getIcon(course.icon)}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 text-xs">
                         <span
-                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                            isNeumorphic
-                              ? "neu-inset text-slate-600"
+                          className={`font-medium ${
+                            isSelected
+                              ? "text-[#0071E3] dark:text-[#2997FF]"
                               : isDark
-                              ? "bg-zinc-800 text-zinc-300 border border-zinc-700"
-                              : "bg-zinc-100 text-zinc-700 border border-zinc-300"
+                              ? "text-zinc-400"
+                              : "text-[#6E6E73]"
                           }`}
                         >
                           {course.tag}
                         </span>
+                        <span className={isDark ? "text-zinc-600" : "text-black/25"}>·</span>
                         <span
-                          className={`text-xs font-mono ${
-                            isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-500"
+                          className={`font-mono tabular-nums ${
+                            isDark ? "text-zinc-400" : "text-[#6E6E73]"
                           }`}
                         >
-                          {course.lessonsCount} lessons
+                          {course.lessonsCount} quests
                         </span>
                       </div>
-                      <h3 className="font-black text-sm sm:text-base mt-1 leading-snug">
+                      <h3 className="font-display font-semibold text-sm sm:text-[15px] mt-0.5 leading-snug">
                         {course.title}
                       </h3>
                       <p
                         className={`text-xs mt-0.5 line-clamp-2 ${
-                          isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"
+                          isDark ? "text-zinc-400" : "text-[#6E6E73]"
                         }`}
                       >
                         {course.subtitle}
@@ -201,19 +178,9 @@ export const CoursePickerModal: React.FC<CoursePickerModalProps> = ({
                     </div>
 
                     {isSelected && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1 ${
-                          isNeumorphic
-                            ? "neu-btn-primary text-white"
-                            : isDark
-                            ? "bg-amber-400 text-zinc-950 border border-amber-500"
-                            : "bg-[#4F46E5] text-white border border-[#1E1B18]"
-                        }`}
-                      >
-                        <Check className="w-4 h-4 stroke-[3]" />
-                      </motion.div>
+                      <div className="w-6 h-6 rounded-full bg-[#0071E3] text-white flex items-center justify-center shrink-0 mt-1">
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      </div>
                     )}
                   </motion.button>
                 );
@@ -221,11 +188,11 @@ export const CoursePickerModal: React.FC<CoursePickerModalProps> = ({
             </div>
 
             <div
-              className={`pt-2 text-center text-xs font-mono ${
-                isDark ? "text-zinc-400" : "text-zinc-600"
+              className={`pt-1 text-center text-xs ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
               }`}
             >
-              Switch courses anytime without losing your quest progress.
+              Switch tracks anytime — your progress stays saved automatically.
             </div>
           </motion.div>
         </div>

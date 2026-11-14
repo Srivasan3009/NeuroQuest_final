@@ -16,11 +16,14 @@ export const StreakModal: React.FC<StreakModalProps> = ({
   streakDays,
   theme = "neumorphic",
 }) => {
-  const isNeumorphic = theme === "neumorphic";
-  const isDark = theme === "obsidian-gold" || theme === "obsidian-noir";
+  const isDark =
+    theme === "obsidian-gold" ||
+    theme === "obsidian-noir" ||
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
 
   const days = ["M", "T", "W", "T", "F", "S", "S"];
-  const currentDayIndex = 3; // e.g. Thursday
+  const currentDayIndex = 3;
 
   return (
     <AnimatePresence>
@@ -30,76 +33,64 @@ export const StreakModal: React.FC<StreakModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/45 backdrop-blur-sm"
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 14 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            className={`relative z-10 w-full max-w-md rounded-3xl p-6 space-y-5 transition-all ${
-              isNeumorphic
-                ? "neu-raised text-slate-800"
-                : isDark
-                ? "bg-[#18181B] border-2 border-[#3F3F46] shadow-2xl text-zinc-100"
-                : "bg-[#FFFDF9] border-2 border-[#1E1B18] shadow-[5px_5px_0px_#1E1B18] text-[#1E1B18]"
+            exit={{ opacity: 0, scale: 0.96, y: 14 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative z-10 w-full max-w-md rounded-3xl p-6 space-y-5 apple-surface ${
+              isDark ? "text-zinc-100" : "text-[#1D1D1F]"
             }`}
           >
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.92 }}
               onClick={onClose}
-              className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors ${
-                isNeumorphic
-                  ? "neu-btn text-slate-600 hover:text-slate-950"
-                  : isDark
-                  ? "border border-[#3F3F46] text-zinc-400 hover:text-zinc-100"
-                  : "border border-[#1E1B18] text-[#1E1B18] bg-white hover:bg-zinc-100"
+              aria-label="Close Streak modal"
+              className={`absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                isDark
+                  ? "bg-white/[0.08] text-zinc-300 hover:bg-white/[0.14]"
+                  : "bg-black/[0.05] text-[#6E6E73] hover:bg-black/[0.08] hover:text-[#1D1D1F]"
               }`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </motion.button>
 
             <div className="text-center space-y-2 pt-2">
-              <motion.div
-                animate={{ scale: [1, 1.12, 1], rotate: [0, -3, 3, 0] }}
-                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                className={`w-16 h-16 mx-auto rounded-3xl flex items-center justify-center ${
-                  isNeumorphic
-                    ? "neu-inset text-rose-500"
-                    : isDark
-                    ? "bg-rose-500/20 border-2 border-rose-400 text-rose-400 shadow-md"
-                    : "bg-[#FFE4E6] border-2 border-[#1E1B18] text-[#E11D48] shadow-md"
+              <div
+                className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center ${
+                  isDark
+                    ? "bg-orange-500/15 text-orange-400"
+                    : "bg-orange-500/10 text-orange-600"
                 }`}
               >
-                <Flame className="w-9 h-9 fill-current" />
-              </motion.div>
-              <h2 className="text-2xl font-black tracking-tight uppercase">
-                {streakDays} Day Streak!
+                <Flame className="w-7 h-7 fill-current" />
+              </div>
+              <h2 className="font-display text-2xl font-bold tracking-tight tabular-nums">
+                {streakDays} Day Streak
               </h2>
-              <p className={`text-xs max-w-xs mx-auto ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                You're building continuous momentum. Complete at least one bite-sized lesson every day
-                to keep your streak alive.
+              <p
+                className={`text-xs max-w-xs mx-auto leading-relaxed ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
+                Complete at least one bite-sized lesson every day to keep your momentum going.
               </p>
             </div>
 
-            {/* Weekly tracker bar */}
-            <div
-              className={`rounded-2xl p-4 space-y-3 transition-all ${
-                isNeumorphic
-                  ? "neu-flat"
-                  : isDark ? "bg-[#27272A] border-2 border-[#3F3F46]" : "bg-white border-2 border-[#1E1B18]"
-              }`}
-            >
-              <div
-                className={`flex items-center justify-between text-xs font-mono ${
-                  isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"
-                }`}
-              >
-                <span className="font-bold">This Week</span>
-                <span className="text-rose-500 font-black">4/7 Active</span>
+            {/* Weekly Tracker */}
+            <div className="rounded-2xl p-4 space-y-3 apple-surface-muted">
+              <div className="flex items-center justify-between text-xs">
+                <span className={isDark ? "text-zinc-400 font-medium" : "text-[#6E6E73] font-medium"}>
+                  This Week
+                </span>
+                <span className="font-mono tabular-nums font-semibold text-orange-500">
+                  4 / 7 Active
+                </span>
               </div>
 
               <div className="grid grid-cols-7 gap-2">
@@ -107,27 +98,20 @@ export const StreakModal: React.FC<StreakModalProps> = ({
                   const isPast = idx <= currentDayIndex;
                   return (
                     <div key={idx} className="flex flex-col items-center gap-1.5">
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black font-mono transition-all ${
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-mono font-semibold transition-colors ${
                           isPast
-                            ? isNeumorphic
-                              ? "neu-btn-primary text-white"
-                              : isDark
-                              ? "bg-rose-500 text-zinc-950 border-2 border-rose-400"
-                              : "bg-[#FFE4E6] text-[#E11D48] border-2 border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                            : isNeumorphic
-                            ? "neu-inset text-slate-400"
+                            ? "bg-orange-500 text-white"
                             : isDark
-                            ? "bg-zinc-800 text-zinc-500 border-2 border-zinc-700"
-                            : "bg-zinc-100 text-zinc-400 border-2 border-zinc-200"
+                            ? "bg-[#1C1C1E] text-zinc-500 border border-white/[0.06]"
+                            : "bg-white text-[#86868B] border border-black/[0.06]"
                         }`}
                       >
                         {isPast ? <Flame className="w-4 h-4 fill-current" /> : day}
-                      </motion.div>
+                      </div>
                       <span
-                        className={`text-[10px] font-mono ${
-                          isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"
+                        className={`text-[11px] font-mono ${
+                          isDark ? "text-zinc-500" : "text-[#86868B]"
                         }`}
                       >
                         {day}
@@ -138,46 +122,35 @@ export const StreakModal: React.FC<StreakModalProps> = ({
               </div>
             </div>
 
-            {/* Streak Freeze Shield perk */}
-            <div
-              className={`flex items-center gap-3 p-3.5 rounded-2xl transition-all ${
-                isNeumorphic
-                  ? "neu-flat"
-                  : isDark ? "bg-[#27272A] border-2 border-[#3F3F46]" : "bg-[#EEF2FF] border-2 border-[#1E1B18]"
-              }`}
-            >
+            {/* Streak Freeze */}
+            <div className="flex items-center gap-3 p-4 rounded-2xl apple-surface-muted">
               <div
-                className={`p-2 rounded-xl ${
-                  isNeumorphic
-                    ? "neu-inset text-indigo-600"
-                    : isDark
-                    ? "bg-amber-400/20 text-amber-400 border border-amber-400/30"
-                    : "bg-[#4F46E5] text-white border border-[#1E1B18]"
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  isDark
+                    ? "bg-[#2997FF]/15 text-[#2997FF]"
+                    : "bg-[#0071E3]/10 text-[#0071E3]"
                 }`}
               >
                 <Shield className="w-5 h-5" />
               </div>
               <div className="flex-1 text-left">
-                <div className="text-xs font-black uppercase">Streak Freeze Active</div>
-                <div className={`text-[11px] ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                  1 missed day will be automatically protected without resetting your counter.
+                <div className="text-xs font-semibold">Streak Freeze Active</div>
+                <div
+                  className={`text-xs mt-0.5 leading-snug ${
+                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                  }`}
+                >
+                  One missed day is automatically protected without resetting your streak.
                 </div>
               </div>
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.96 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onClose}
-              className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-transform ${
-                isNeumorphic
-                  ? "neu-btn-primary text-white"
-                  : isDark
-                  ? "bg-rose-500 text-zinc-950 hover:bg-rose-400 shadow-md"
-                  : "bg-[#1E1B18] text-white hover:bg-black shadow-[2px_2px_0px_#1E1B18]"
-              }`}
+              className="w-full py-3 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white font-medium text-sm transition-colors"
             >
-              Keep Building Momentum
+              Continue Learning
             </motion.button>
           </motion.div>
         </div>

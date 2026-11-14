@@ -8,7 +8,7 @@ import {
   Award,
   Flame,
   Sparkles,
-  Check
+  Check,
 } from "lucide-react";
 import { UserProfile, Stage, Quest, AppTheme } from "../../types";
 import { soundFx } from "../../utils/sound";
@@ -36,30 +36,24 @@ export const LabView: React.FC<LabViewProps> = ({
   stages,
   onStartLesson,
   onAddSparks,
-  theme = "neumorphic"
+  theme = "neumorphic",
 }) => {
-  const isNeumorphic = theme === "neumorphic";
-  const isRiso = theme === "riso-pop" || theme === "warm-editorial";
   const isDark =
     theme === "obsidian-gold" ||
     theme === "obsidian-noir" ||
-    theme === "dark-editorial" ||
-    theme === "cyber-dark";
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
 
   const todayKey = new Date().toISOString().slice(0, 10);
   const storageKey = `neuroquest_daily_goals_${todayKey}`;
 
-  // Find the next active or first lesson
   const currentQuest = stages[0]?.quests[0];
   const currentStage = stages[0];
 
-  // 3 Daily Goals state with localStorage persistence
   const [goals, setGoals] = useState<DailyGoalItem[]>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        return JSON.parse(saved);
-      }
+      if (saved) return JSON.parse(saved);
     } catch {
       // Ignore
     }
@@ -69,11 +63,13 @@ export const LabView: React.FC<LabViewProps> = ({
       {
         id: "goal-lesson",
         title: "Complete 1 Mission Lesson",
-        subtitle: currentQuest ? `Master "${currentQuest.title}"` : "Progress through the core AI curriculum",
+        subtitle: currentQuest
+          ? `Master "${currentQuest.title}"`
+          : "Progress through the core AI curriculum",
         sparksReward: 15,
         xpReward: 30,
         completed: hasCompletedLesson,
-        type: "lesson"
+        type: "lesson",
       },
       {
         id: "goal-review",
@@ -82,7 +78,7 @@ export const LabView: React.FC<LabViewProps> = ({
         sparksReward: 10,
         xpReward: 20,
         completed: false,
-        type: "review"
+        type: "review",
       },
       {
         id: "goal-streak",
@@ -91,12 +87,11 @@ export const LabView: React.FC<LabViewProps> = ({
         sparksReward: 15,
         xpReward: 25,
         completed: (user.streakDays || 0) >= 1,
-        type: "streak"
-      }
+        type: "streak",
+      },
     ];
   });
 
-  // Keep storage in sync
   useEffect(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(goals));
@@ -105,11 +100,12 @@ export const LabView: React.FC<LabViewProps> = ({
     }
   }, [goals, storageKey]);
 
-  // Update lesson goal if user completes a quest
   useEffect(() => {
     if ((user.completedQuestIds || []).length > 0) {
       setGoals((prev) =>
-        prev.map((g) => (g.id === "goal-lesson" ? { ...g, completed: true } : g))
+        prev.map((g) =>
+          g.id === "goal-lesson" ? { ...g, completed: true } : g
+        )
       );
     }
   }, [user.completedQuestIds?.length]);
@@ -144,25 +140,30 @@ export const LabView: React.FC<LabViewProps> = ({
   const allGoalsDone = completedGoalsCount === 3;
 
   return (
-    <div id="lab-view" className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-6 pb-32 space-y-6">
-      {/* Header with Sparks pill */}
-      <div className="flex items-center justify-between gap-4 pb-1">
-        <div>
-          <div className={`text-[10px] font-mono uppercase font-bold tracking-widest ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-slate-500"}`}>
-            DAILY FOCUS & MISSIONS
-          </div>
-          <h1 className={`text-2xl sm:text-3xl font-black tracking-tight uppercase ${isNeumorphic ? "text-slate-800" : isDark ? "text-zinc-100" : "text-[#1E1B18]"}`}>
-            DAILY GOALS
+    <div
+      id="lab-view"
+      className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-32 space-y-6"
+    >
+      {/* Header */}
+      <div className="flex items-end justify-between gap-4">
+        <div className="space-y-1">
+          <p
+            className={`text-xs font-medium ${
+              isDark ? "text-[#2997FF]" : "text-[#0071E3]"
+            }`}
+          >
+            Daily Focus
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Daily Goals
           </h1>
         </div>
 
         <div
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-mono font-bold ${
-            isNeumorphic
-              ? "neu-pill-accent text-amber-600"
-              : isDark
-              ? "bg-amber-950/50 border border-amber-500/40 text-amber-400"
-              : "bg-[#FEF08A] border-2 border-[#1E1B18] text-[#1E1B18]"
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-semibold tabular-nums ${
+            isDark
+              ? "bg-amber-500/10 border-amber-400/20 text-amber-300"
+              : "bg-amber-500/10 border-amber-500/15 text-amber-700"
           }`}
         >
           <Zap className="w-3.5 h-3.5 fill-current" />
@@ -170,244 +171,218 @@ export const LabView: React.FC<LabViewProps> = ({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-6">
-        {/* League Chest Progress Card */}
-        <div
-          className={`p-5 rounded-2xl flex items-center justify-between gap-4 transition-all ${
-            isNeumorphic
-              ? "neu-raised text-slate-800"
-              : isDark
-              ? "bg-[#27272A] border border-[#3F3F46] text-zinc-100 shadow-xl"
-              : "bg-[#FFFDF9] border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18] text-[#1E1B18]"
-          }`}
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                isNeumorphic
-                  ? "neu-inset text-amber-500"
-                  : isDark
-                  ? "bg-amber-500/10 border-2 border-amber-500/40 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-                  : "bg-[#FEF08A] border-2 border-[#1E1B18] text-[#1E1B18]"
-              }`}
-            >
-              <Award className="w-7 h-7" />
-            </div>
-
-            <div>
-              <div className={`text-[10px] font-mono uppercase tracking-wider ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                LEAGUE • CHEST LV.1
-              </div>
-              <div className={`text-base font-black uppercase tracking-wide ${isDark ? "text-amber-400" : "text-[#1E1B18]"}`}>
-                BRONZE TIER
-              </div>
-              <div className={`text-xs font-mono ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                {(user.completedQuestIds || []).length || 1}/20 to next chest unlock
-              </div>
-            </div>
+      {/* Tier Summary Card */}
+      <div className="apple-surface p-5 sm:p-6 rounded-3xl flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+              isDark
+                ? "bg-amber-500/15 text-amber-300"
+                : "bg-amber-500/10 text-amber-600"
+            }`}
+          >
+            <Award className="w-6 h-6" />
           </div>
 
-          <div className="text-right hidden sm:block">
-            <span className={`text-xs font-medium block max-w-[150px] leading-tight ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-              Complete your 3 daily goals to accelerate league standing
-            </span>
+          <div className="space-y-0.5">
+            <div
+              className={`text-xs font-medium ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
+              }`}
+            >
+              League Chest · Level 1
+            </div>
+            <div className="text-base font-bold">Bronze Tier</div>
+            <div
+              className={`text-xs font-mono tabular-nums ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
+              }`}
+            >
+              {(user.completedQuestIds || []).length || 1} / 20 to next chest
+            </div>
           </div>
         </div>
 
-        {/* The 3 Daily Goals Section */}
-        <div
-          id="lab-daily-goals-card"
-          className={`p-6 rounded-3xl space-y-6 transition-all ${
-            isNeumorphic
-              ? "neu-raised text-slate-800"
-              : isDark
-              ? "bg-[#27272A] border border-[#3F3F46] text-zinc-100 shadow-xl"
-              : "bg-[#FFFDF9] border-2 border-[#1E1B18] shadow-[4px_4px_0px_#1E1B18] text-[#1E1B18]"
+        <p
+          className={`text-xs hidden sm:block max-w-[190px] text-right leading-relaxed ${
+            isDark ? "text-zinc-400" : "text-[#6E6E73]"
           }`}
         >
-          {/* Section Header */}
-          <div className={`flex items-center justify-between pb-4 ${isNeumorphic ? "border-b border-slate-300" : isDark ? "border-b border-zinc-700" : "border-b border-zinc-200"}`}>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={`p-1.5 rounded-xl ${isNeumorphic ? "neu-inset text-amber-500" : isDark ? "bg-amber-400/10 text-amber-400" : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"}`}>
-                  <Target className="w-4 h-4" />
-                </span>
-                <h2 className={`text-lg sm:text-xl font-black uppercase tracking-tight ${isNeumorphic ? "text-slate-800" : isDark ? "text-zinc-100" : "text-[#1E1B18]"}`}>
-                  3 DAILY GOALS
-                </h2>
-              </div>
-              <p className={`text-xs font-sans mt-1 ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                Consistency breeds mastery. Check off all three daily goals to earn bonus Sparks.
-              </p>
-            </div>
+          Complete your daily goals to accelerate league standing.
+        </p>
+      </div>
 
+      {/* 3 Daily Goals Grouped Card */}
+      <div
+        id="lab-daily-goals-card"
+        className="apple-surface p-6 sm:p-7 rounded-3xl space-y-5"
+      >
+        <div
+          className={`flex items-start justify-between gap-4 pb-4 border-b ${
+            isDark ? "border-white/[0.08]" : "border-black/[0.06]"
+          }`}
+        >
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span
-                className={`text-xs font-mono font-bold px-3 py-1 rounded-full ${
-                  allGoalsDone
-                    ? isNeumorphic
-                      ? "neu-flat text-emerald-600 font-black"
-                      : "bg-emerald-500 text-slate-950 font-black"
-                    : isNeumorphic
-                    ? "neu-inset text-[#4F46E5]"
-                    : isDark
-                    ? "bg-zinc-800 text-amber-400 border border-zinc-700"
-                    : "bg-[#EEF2FF] text-[#4F46E5] border border-[#1E1B18]"
+              <Target
+                className={`w-4 h-4 ${
+                  isDark ? "text-[#2997FF]" : "text-[#0071E3]"
                 }`}
-              >
-                {completedGoalsCount}/3 COMPLETED
-              </span>
+              />
+              <h2 className="text-lg font-bold tracking-tight">Today's 3 Goals</h2>
             </div>
+            <p
+              className={`text-xs ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
+              }`}
+            >
+              Consistency builds intuition. Check off all three for bonus Sparks.
+            </p>
           </div>
 
-          {/* Goals List */}
-          <div className="space-y-4">
-            {goals.map((goal, idx) => {
-              const isCompleted = goal.completed;
+          <span
+            className={`text-xs font-semibold px-3 py-1 rounded-full tabular-nums whitespace-nowrap ${
+              allGoalsDone
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                : isDark
+                ? "bg-white/[0.08] text-zinc-200"
+                : "bg-black/[0.05] text-[#1D1D1F]"
+            }`}
+          >
+            {completedGoalsCount} / 3 done
+          </span>
+        </div>
 
-              return (
-                <div
-                  key={goal.id}
-                  className={`p-4 rounded-2xl flex items-center justify-between gap-4 transition-all ${
-                    isCompleted
-                      ? isNeumorphic
-                        ? "neu-inset bg-slate-200/50"
+        <div
+          className={`divide-y ${
+            isDark ? "divide-white/[0.06]" : "divide-black/[0.05]"
+          }`}
+        >
+          {goals.map((goal, idx) => {
+            const isCompleted = goal.completed;
+
+            return (
+              <div
+                key={goal.id}
+                className="py-4 first:pt-1 last:pb-1 flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono text-xs font-semibold shrink-0 transition-colors ${
+                      isCompleted
+                        ? isDark
+                          ? "bg-emerald-500/15 text-emerald-400"
+                          : "bg-emerald-500/10 text-emerald-600"
                         : isDark
-                        ? "bg-zinc-900/60 border border-zinc-800 opacity-90"
-                        : "bg-slate-100 border border-zinc-300 opacity-80"
-                      : isNeumorphic
-                      ? "neu-flat hover:translate-y-[-1px]"
-                      : isDark
-                      ? "bg-[#18181B] border border-zinc-700 hover:border-amber-400/50"
-                      : "bg-[#FFFDF9] border-2 border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                    {/* Goal Number Badge */}
-                    <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-mono text-xs font-black shrink-0 ${
-                        isCompleted
-                          ? isNeumorphic
-                            ? "neu-flat text-emerald-600"
-                            : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-                          : isNeumorphic
-                          ? "neu-inset text-slate-600"
-                          : isDark
-                          ? "bg-zinc-800 border border-zinc-700 text-zinc-300"
-                          : "bg-[#FEF08A] border border-[#1E1B18] text-[#1E1B18]"
-                      }`}
-                    >
-                      {isCompleted ? <Check className="w-4 h-4" /> : `0${idx + 1}`}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4
-                          className={`text-sm font-bold truncate ${
-                            isCompleted
-                              ? "line-through opacity-70 text-slate-400"
-                              : isNeumorphic
-                              ? "text-slate-800"
-                              : isDark
-                              ? "text-zinc-100"
-                              : "text-[#1E1B18]"
-                          }`}
-                        >
-                          {goal.title}
-                        </h4>
-                        <span
-                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md shrink-0 ${
-                            isNeumorphic
-                              ? "neu-pill-accent text-amber-600"
-                              : isDark
-                              ? "bg-amber-400/10 text-amber-400 border border-amber-400/30"
-                              : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
-                          }`}
-                        >
-                          +{goal.sparksReward} Sparks
-                        </span>
-                      </div>
-                      <p
-                        className={`text-xs mt-0.5 truncate ${
-                          isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"
-                        }`}
-                      >
-                        {goal.subtitle}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right Interactive Toggle / Action Button */}
-                  <div className="flex items-center gap-2 shrink-0">
-                    {goal.type === "lesson" && !isCompleted && currentQuest ? (
-                      <button
-                        id="btn-goal-start-lesson"
-                        onClick={() => handleActionGoal(goal)}
-                        className={`px-3.5 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all ${
-                          isNeumorphic
-                            ? "neu-btn-primary text-white"
-                            : isDark
-                            ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 shadow-md"
-                            : "bg-[#4F46E5] text-white border-2 border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                        }`}
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>Start</span>
-                      </button>
+                        ? "bg-white/[0.06] text-zinc-300"
+                        : "bg-black/[0.04] text-[#6E6E73]"
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <Check className="w-4 h-4" />
                     ) : (
-                      <button
-                        id={`btn-toggle-${goal.id}`}
-                        onClick={() => handleToggleGoal(goal.id)}
-                        className={`p-2 rounded-xl transition-all ${
-                          isCompleted
-                            ? isNeumorphic
-                              ? "neu-flat text-emerald-600"
-                              : "text-emerald-400 bg-emerald-950/40"
-                            : isNeumorphic
-                            ? "neu-inset text-slate-400 hover:text-slate-600"
-                            : "text-slate-500 hover:text-slate-300"
-                        }`}
-                        title={isCompleted ? "Mark incomplete" : "Mark completed"}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-6 h-6 fill-emerald-500/20" />
-                        ) : (
-                          <Circle className="w-6 h-6" />
-                        )}
-                      </button>
+                      `0${idx + 1}`
                     )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
 
-          {/* Completion Celebration Footer */}
-          {allGoalsDone && (
-            <div
-              className={`p-4 rounded-2xl flex items-center justify-between gap-3 animate-in fade-in ${
-                isNeumorphic
-                  ? "neu-inset bg-emerald-50 border border-emerald-200 text-emerald-800"
-                  : isDark
-                  ? "bg-emerald-950/40 border border-emerald-500/40 text-emerald-300"
-                  : "bg-[#ECFDF5] border-2 border-[#1E1B18] text-emerald-900 shadow-[2px_2px_0px_#1E1B18]"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-emerald-500" />
-                <div>
-                  <div className="text-xs font-black uppercase tracking-wider">All 3 Goals Completed Today!</div>
-                  <div className="text-[11px] opacity-80">You're making steady daily progress toward AI mastery.</div>
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4
+                        className={`text-sm font-semibold truncate ${
+                          isCompleted
+                            ? isDark
+                              ? "text-zinc-500 line-through"
+                              : "text-zinc-400 line-through"
+                            : ""
+                        }`}
+                      >
+                        {goal.title}
+                      </h4>
+                      <span
+                        className={`text-xs font-mono tabular-nums ${
+                          isDark ? "text-amber-300" : "text-amber-700"
+                        }`}
+                      >
+                        · +{goal.sparksReward} Sparks
+                      </span>
+                    </div>
+                    <p
+                      className={`text-xs truncate ${
+                        isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                      }`}
+                    >
+                      {goal.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  {goal.type === "lesson" && !isCompleted && currentQuest ? (
+                    <button
+                      id="btn-goal-start-lesson"
+                      onClick={() => handleActionGoal(goal)}
+                      className="min-h-[38px] px-4 py-1.5 rounded-full font-semibold text-xs bg-[#0071E3] hover:bg-[#0077ED] text-white flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>Start</span>
+                    </button>
+                  ) : (
+                    <button
+                      id={`btn-toggle-${goal.id}`}
+                      onClick={() => handleToggleGoal(goal.id)}
+                      className={`p-2 rounded-full transition-colors ${
+                        isCompleted
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : isDark
+                          ? "text-zinc-500 hover:text-zinc-300"
+                          : "text-zinc-400 hover:text-zinc-600"
+                      }`}
+                      title={
+                        isCompleted ? "Mark incomplete" : "Mark completed"
+                      }
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-6 h-6" />
+                      ) : (
+                        <Circle className="w-6 h-6" />
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="font-mono text-xs font-black text-amber-500 flex items-center gap-1">
-                <Flame className="w-4 h-4 fill-current" />
-                <span>STREAK ACTIVE</span>
+            );
+          })}
+        </div>
+
+        {allGoalsDone && (
+          <div
+            className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+              isDark
+                ? "bg-emerald-500/10 border-emerald-500/25 text-zinc-100"
+                : "bg-emerald-50/80 border-emerald-200 text-[#1D1D1F]"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div>
+                <div className="text-xs font-semibold">
+                  All 3 Goals Completed Today
+                </div>
+                <div
+                  className={`text-xs ${
+                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                  }`}
+                >
+                  Steady daily progress keeps your mastery sharp.
+                </div>
               </div>
             </div>
-          )}
-        </div>
+            <div className="text-xs font-semibold text-orange-600 dark:text-orange-400 flex items-center gap-1 whitespace-nowrap">
+              <Flame className="w-3.5 h-3.5 fill-current" />
+              <span>Streak Active</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

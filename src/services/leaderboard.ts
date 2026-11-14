@@ -1,5 +1,17 @@
-import { supabase, isSupabaseConfigured } from "./supabase";
 import { UserProfile } from "../types";
+import { auth, db, handleFirestoreError, OperationType } from "./firebase";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
 export interface RealLeaderboardEntry {
   id: string;
@@ -25,27 +37,9 @@ export function calculateTier(level: number, sparks: number): "DIAMOND" | "PLATI
   return "BRONZE";
 }
 
-const LOCAL_USERS_REGISTRY_KEY = "neuroquest_registered_users_registry_v1";
-
-const DISALLOWED_MOCK_HANDLES = new Set([
-  "alexchen",
-  "alex.chen",
-  "alex_chen",
-  "alex chen",
-  "alex.learner@neuroquest.edu",
-  "learner-usr-101",
-]);
-
-function isMockCadet(id?: string, name?: string, username?: string, email?: string): boolean {
-  if (id && DISALLOWED_MOCK_HANDLES.has(id.toLowerCase())) return true;
-  if (name && DISALLOWED_MOCK_HANDLES.has(name.toLowerCase())) return true;
-  if (username && DISALLOWED_MOCK_HANDLES.has(username.toLowerCase())) return true;
-  if (email && DISALLOWED_MOCK_HANDLES.has(email.toLowerCase())) return true;
-  return false;
-}
-
 export class LeaderboardService {
   private static instance: LeaderboardService;
+  private syncQueue: Promise<void> = Promise.resolve();
 
   private constructor() {}
 
@@ -57,145 +51,155 @@ export class LeaderboardService {
   }
 
   /**
-   * Sync current active user's stats to Cloud database (Supabase) and local registry
+   * Sync current authenticated user's public non-PII stats to Firestore /leaderboard/{uid}
    */
   public async syncUserStats(user: UserProfile): Promise<void> {
-    if (!user) return;
-    if (isMockCadet(user.id, user.fullName, user.username, user.email)) return;
+    const task = this.syncQueue.then(() => this.performSyncUserStats(user));
+    this.syncQueue = task.catch(() => {});
+    return task;
+  }
 
-    const userId = user.id || user.email || `cadet_${user.username || "me"}`;
+  private async performSyncUserStats(user: UserProfile): Promise<void> {
+    const firebaseUser = auth.currentUser;
+    if (!user || !firebaseUser) return;
 
-    // 1. Save to local real-users registry
+    const uid = firebaseUser.uid;
+    const path = `leaderboard/${uid}`;
+    const entryRef = doc(db, "leaderboard", uid);
+
+    const payload = {
+      uid: uid.slice(0, 128),
+      fullName: (user.fullName || "Cadet").trim().slice(0, 100) || "Cadet",
+      username: (user.username || "cadet").trim().slice(0, 50) || "cadet",
+      avatarUrl: (user.avatarUrl || "").slice(0, 200000),
+      sparks: Math.min(10000000, Math.max(0, Math.round(user.sparks ?? 0))),
+      xp: Math.min(10000000, Math.max(0, Math.round(user.xp ?? 0))),
+      level: Math.min(100, Math.max(1, Math.round(user.level ?? 1))),
+      completedQuestsCount: Math.min(500, Math.max(0, (user.completedQuestIds || []).length)),
+      isPublic: true,
+    };
+
     try {
-      const raw = localStorage.getItem(LOCAL_USERS_REGISTRY_KEY);
-      const registry: Record<string, Partial<UserProfile>> = raw ? JSON.parse(raw) : {};
-
-      // Filter out any mock accounts from registry
-      for (const k of Object.keys(registry)) {
-        if (isMockCadet(k, registry[k]?.fullName, registry[k]?.username, registry[k]?.email)) {
-          delete registry[k];
-        }
+      const snap = await getDoc(entryRef);
+      if (!snap.exists()) {
+        await setDoc(entryRef, {
+          ...payload,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        await updateDoc(entryRef, {
+          ...payload,
+          updatedAt: serverTimestamp(),
+        });
       }
-
-      registry[userId] = {
-        id: userId,
-        fullName: user.fullName || "Cadet",
-        username: user.username || user.fullName?.toLowerCase().replace(/\s+/g, "_") || "cadet",
-        email: user.email,
-        avatarUrl: user.avatarUrl || "",
-        sparks: user.sparks ?? 0,
-        xp: user.xp ?? 0,
-        level: user.level ?? 1,
-        completedQuestIds: user.completedQuestIds || [],
-        lastActiveDate: new Date().toISOString(),
-      };
-
-      localStorage.setItem(LOCAL_USERS_REGISTRY_KEY, JSON.stringify(registry));
-    } catch (e) {
-      console.warn("Could not save to local user registry", e);
-    }
-
-    // 2. Sync to Supabase profiles table
-    if (isSupabaseConfigured) {
-      try {
-        const payload = {
-          id: userId,
-          full_name: user.fullName || "Cadet",
-          username: user.username || (user.fullName ? user.fullName.toLowerCase().replace(/\s+/g, "_") : "cadet"),
-          avatar_url: user.avatarUrl || "",
-          sparks: user.sparks ?? 0,
-          xp: user.xp ?? 0,
-          level: user.level ?? 1,
-          completed_quests_count: (user.completedQuestIds || []).length,
-          updated_at: new Date().toISOString(),
-        };
-
-        const { error } = await supabase
-          .from("profiles")
-          .upsert(payload, { onConflict: "id" });
-
-        if (error) {
-          console.warn("Supabase upsert note:", error.message || error);
-        }
-      } catch (err) {
-        console.info("Cloud leaderboard sync note:", err);
-      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, path);
     }
   }
 
   /**
-   * Fetch rankings: strictly 2 users as requested
-   * #1 Shanthi: 120 Sparks, Level 2, 3 Quests
-   * #2 Srivasan: 70 Sparks, Level 1, 1 Quest
+   * Query live rankings from Firestore /leaderboard
    */
   public async getRealRankings(
     currentUser: UserProfile,
     sortBy: "sparks" | "xp" | "quests" = "sparks"
   ): Promise<{ rankings: RealLeaderboardEntry[]; isCloudSource: boolean }> {
-    const isCurrentUserShanthi =
-      (currentUser.fullName && currentUser.fullName.toLowerCase().includes("shanthi")) ||
-      (currentUser.username && currentUser.username.toLowerCase().includes("shanth")) ||
-      (currentUser.email && currentUser.email.toLowerCase().includes("shanth"));
+    const currentUid = auth.currentUser?.uid || currentUser.id;
+    const path = "leaderboard";
 
-    const isCurrentUserSrivasan =
-      (currentUser.fullName && currentUser.fullName.toLowerCase().includes("srivasan")) ||
-      (currentUser.username && currentUser.username.toLowerCase().includes("srivasan")) ||
-      (currentUser.email && currentUser.email.toLowerCase().includes("srivasan"));
+    if (!auth.currentUser) {
+      const selfEntry: RealLeaderboardEntry = {
+        id: currentUid,
+        rank: 1,
+        name: currentUser.fullName || "Cadet",
+        username: currentUser.username || "cadet",
+        avatarUrl: currentUser.avatarUrl,
+        avatarLetter: (currentUser.fullName?.charAt(0) || "C").toUpperCase(),
+        tier: calculateTier(currentUser.level || 1, currentUser.sparks || 0),
+        sparks: currentUser.sparks ?? 0,
+        xp: currentUser.xp ?? 0,
+        level: currentUser.level ?? 1,
+        questsCompletedCount: (currentUser.completedQuestIds || []).length,
+        isCurrentUser: true,
+        lastActive: "Just now",
+      };
+      return { rankings: [selfEntry], isCloudSource: false };
+    }
 
-    const shanthiEntry: RealLeaderboardEntry = {
-      id: "cadet_shanthi",
-      rank: 1,
-      name: "Shanthi",
-      username: "shanthe2021",
-      email: "shanthe2021@gmail.com",
-      avatarLetter: "S",
-      avatarUrl: isCurrentUserShanthi ? currentUser.avatarUrl : undefined,
-      tier: "BRONZE",
-      sparks: 120,
-      xp: 850,
-      level: 2,
-      questsCompletedCount: 3,
-      isCurrentUser: isCurrentUserShanthi || (!isCurrentUserSrivasan),
-      lastActive: "Just now",
-    };
+    try {
+      const q = query(
+        collection(db, path),
+        where("isPublic", "==", true),
+        limit(50)
+      );
+      const snapshot = await getDocs(q);
 
-    const srivasanEntry: RealLeaderboardEntry = {
-      id: "cadet_srivasan",
-      rank: 2,
-      name: "Srivasan",
-      username: "srivasan3009",
-      email: "srivasan3009@gmail.com",
-      avatarLetter: "S",
-      avatarUrl: isCurrentUserSrivasan ? currentUser.avatarUrl : undefined,
-      tier: "BRONZE",
-      sparks: 70,
-      xp: 520,
-      level: 1,
-      questsCompletedCount: 1,
-      isCurrentUser: Boolean(isCurrentUserSrivasan),
-      lastActive: "Recently",
-    };
+      const entries: RealLeaderboardEntry[] = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        const level = typeof d.level === "number" ? d.level : 1;
+        const sparks = typeof d.sparks === "number" ? d.sparks : 0;
+        const xp = typeof d.xp === "number" ? d.xp : 0;
+        const questsCompletedCount =
+          typeof d.completedQuestsCount === "number" ? d.completedQuestsCount : 0;
+        const name = typeof d.fullName === "string" && d.fullName ? d.fullName : "Cadet";
 
-    const list = [shanthiEntry, srivasanEntry];
+        entries.push({
+          id: docSnap.id,
+          rank: 1,
+          name,
+          username: typeof d.username === "string" && d.username ? d.username : "cadet",
+          avatarUrl: typeof d.avatarUrl === "string" ? d.avatarUrl : "",
+          avatarLetter: name.charAt(0).toUpperCase(),
+          tier: calculateTier(level, sparks),
+          sparks,
+          xp,
+          level,
+          questsCompletedCount,
+          isCurrentUser: docSnap.id === currentUid,
+          lastActive: "Active",
+        });
+      });
 
-    // Sort according to metric
-    list.sort((a, b) => {
-      if (sortBy === "xp") return b.xp - a.xp;
-      if (sortBy === "quests") return b.questsCompletedCount - a.questsCompletedCount;
-      return b.sparks - a.sparks;
-    });
+      // Ensure current user appears even if their initial sync is still settling
+      if (!entries.some((e) => e.isCurrentUser)) {
+        entries.push({
+          id: currentUid,
+          rank: 1,
+          name: currentUser.fullName || "Cadet",
+          username: currentUser.username || "cadet",
+          avatarUrl: currentUser.avatarUrl || "",
+          avatarLetter: (currentUser.fullName?.charAt(0) || "C").toUpperCase(),
+          tier: calculateTier(currentUser.level || 1, currentUser.sparks || 0),
+          sparks: currentUser.sparks ?? 0,
+          xp: currentUser.xp ?? 0,
+          level: currentUser.level ?? 1,
+          questsCompletedCount: (currentUser.completedQuestIds || []).length,
+          isCurrentUser: true,
+          lastActive: "Just now",
+        });
+      }
 
-    const rankedList = list.map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
-    }));
+      entries.sort((a, b) => {
+        if (sortBy === "xp") return b.xp - a.xp;
+        if (sortBy === "quests") return b.questsCompletedCount - a.questsCompletedCount;
+        return b.sparks - a.sparks;
+      });
 
-    return {
-      rankings: rankedList,
-      isCloudSource: false,
-    };
+      const rankedList = entries.map((entry, index) => ({
+        ...entry,
+        rank: index + 1,
+      }));
+
+      return {
+        rankings: rankedList,
+        isCloudSource: true,
+      };
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
   }
 }
 
 export const leaderboardService = LeaderboardService.getInstance();
-

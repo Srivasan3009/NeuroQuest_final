@@ -16,24 +16,11 @@ import { CoursePickerModal } from "./components/modals/CoursePickerModal";
 import { SparksModal } from "./components/modals/SparksModal";
 import { StreakModal } from "./components/modals/StreakModal";
 import { DailyGiftModal } from "./components/modals/DailyGiftModal";
-import { ParticleBackground } from "./components/layout/ParticleBackground";
 import { AuthStarterView } from "./components/auth/AuthStarterView";
-import { OAuthCallbackHandler } from "./components/auth/OAuthCallbackHandler";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { audioManager, soundFx } from "./utils/sound";
 
-const isOAuthCallbackWindow = () => {
-  try {
-    const hash = window.location.hash || "";
-    const search = window.location.search || "";
-    const isNamedOAuth = window.name === "supabase_google_oauth";
-    const hasOAuthHash = hash.includes("access_token=") || hash.includes("error=");
-    const hasOAuthQuery = search.includes("code=") || (search.includes("error=") && Boolean(window.opener));
-    return isNamedOAuth || hasOAuthHash || hasOAuthQuery;
-  } catch {
-    return false;
-  }
-};
+const GUEST_THEME_KEY = "neuroquest_guest_theme";
 
 const TAB_INDICES: Record<string, number> = {
   home: 0,
@@ -46,27 +33,28 @@ const TAB_INDICES: Record<string, number> = {
 const sectionVariants = {
   initial: (direction: number) => ({
     opacity: 0,
-    x: direction > 0 ? 32 : -32,
-    scale: 0.99,
+    x: direction > 0 ? 14 : -14,
+    y: 6,
+    scale: 0.992,
   }),
   animate: {
     opacity: 1,
     x: 0,
+    y: 0,
     scale: 1,
     transition: {
-      type: "spring",
-      stiffness: 350,
-      damping: 28,
-      mass: 0.75,
+      duration: 0.34,
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   },
   exit: (direction: number) => ({
     opacity: 0,
-    x: direction > 0 ? -32 : 32,
-    scale: 0.99,
+    x: direction > 0 ? -14 : 14,
+    y: -4,
+    scale: 0.995,
     transition: {
-      duration: 0.18,
-      ease: [0.22, 1, 0.36, 1],
+      duration: 0.2,
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   }),
 };
@@ -77,14 +65,14 @@ export default function App() {
   const [activeCourse, setActiveCourse] = useState<Course>(AVAILABLE_COURSES[0]);
 
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+  const [authReady, setAuthReady] = useState<boolean>(() => authService.isAuthReady());
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [guestTheme, setGuestTheme] = useState<AppTheme>(() => {
     try {
-      return (
-        localStorage.getItem("neuroquest_auth_active") === "true" ||
-        localStorage.getItem("neuropath_auth_active") === "true"
-      );
+      const saved = localStorage.getItem(GUEST_THEME_KEY) as AppTheme | null;
+      return saved || "neumorphic";
     } catch {
-      return false;
+      return "neumorphic";
     }
   });
   const [currentTab, setCurrentTab] = useState<NavTab | "quest">("home");
@@ -112,65 +100,22 @@ export default function App() {
     phase: "Learn",
   });
 
-  // Load user profile on startup and subscribe to auth state changes
+  // Subscribe to real Firebase Authentication state changes
   useEffect(() => {
-    async function loadData() {
-      const profile = await dataStore.getUserProfile();
-      setUser(profile);
-    }
-    loadData();
-
-    const unsubscribe = authService.onAuthStateChanged((authUser) => {
+    const unsubscribe = authService.onAuthStateChanged((authUser, ready) => {
+      setAuthReady(ready);
       if (authUser) {
         setUser(authUser);
         setIsLoggedIn(true);
+      } else if (ready) {
+        setUser(null);
+        setIsLoggedIn(false);
+        setActiveQuest(null);
       }
     });
 
-    // Cross-tab / Popup communication via BroadcastChannel
-    let authChannel: BroadcastChannel | null = null;
-    try {
-      if (typeof BroadcastChannel !== "undefined") {
-        authChannel = new BroadcastChannel("neuroquest_auth_channel");
-        authChannel.onmessage = (event) => {
-          if (event.data?.type === "NEUROQUEST_AUTH_CALLBACK_SUCCESS" && event.data?.user) {
-            handleLoginSuccess(event.data.user);
-          }
-        };
-      }
-    } catch (err) {
-      console.warn("BroadcastChannel initialization warning:", err);
-    }
-
-    // Cross-window postMessage listener
-    const handlePostMessage = (event: MessageEvent) => {
-      if (event.data?.type === "NEUROQUEST_AUTH_CALLBACK_SUCCESS" && event.data?.user) {
-        handleLoginSuccess(event.data.user);
-      }
-    };
-    window.addEventListener("message", handlePostMessage);
-
-    // Cross-tab storage listener
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "neuroquest_auth_active" && e.newValue === "true") {
-        dataStore.getUserProfile().then((p) => {
-          if (p) handleLoginSuccess(p);
-        });
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-
     return () => {
       unsubscribe();
-      if (authChannel) {
-        try {
-          authChannel.close();
-        } catch {
-          // Ignore
-        }
-      }
-      window.removeEventListener("message", handlePostMessage);
-      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
@@ -188,7 +133,7 @@ export default function App() {
 
   const handleCompleteQuest = async (questId: string, xpReward: number, skillTag: string) => {
     const prevLevel = user?.level || 1;
-    const updated = await dataStore.completeQuest(questId, xpReward, skillTag);
+    await dataStore.completeQuest(questId, xpReward, skillTag);
     // Also award +10 sparks on completion!
     const withSparks = await dataStore.addSparks(10);
     setUser(withSparks);
@@ -231,6 +176,15 @@ export default function App() {
   };
 
   const handleSetTheme = async (theme: AppTheme) => {
+    if (!user) {
+      setGuestTheme(theme);
+      try {
+        localStorage.setItem(GUEST_THEME_KEY, theme);
+      } catch {
+        // Ignore
+      }
+      return;
+    }
     const updated = await dataStore.setTheme(theme);
     setUser(updated);
   };
@@ -271,9 +225,10 @@ export default function App() {
     }
   };
 
-  // Normalize theme: default to neumorphic
+  // Normalize theme: default to neumorphic (Apple Light)
+  const rawTheme = user?.theme ?? guestTheme;
   const activeTheme: AppTheme =
-    !user?.theme || user.theme === "riso-pop" ? "neumorphic" : user.theme;
+    !rawTheme || rawTheme === "riso-pop" ? "neumorphic" : rawTheme;
 
   const isDark =
     activeTheme === "obsidian-gold" ||
@@ -302,265 +257,303 @@ export default function App() {
   const handleLoginSuccess = (authenticatedUser: UserProfile) => {
     setUser(authenticatedUser);
     setIsLoggedIn(true);
+    setAuthReady(true);
     setCurrentTab("home");
-    try {
-      localStorage.setItem("neuroquest_auth_active", "true");
-    } catch {
-      // Ignore localStorage errors
-    }
   };
 
   const handleLogOut = async () => {
     soundFx.playTap();
-    setIsLoggedIn(false);
     await authService.signOut();
+    setUser(null);
+    setIsLoggedIn(false);
+    setActiveQuest(null);
+    setCurrentTab("home");
   };
 
-  // If this window is the Google OAuth popup / callback tab, render the compact login completion screen
-  if (isOAuthCallbackWindow()) {
-    return <OAuthCallbackHandler />;
-  }
-
-  if (!user) {
+  if (!authReady) {
     return (
-      <div className={`min-h-screen ${isDark ? "bg-[#18181B] text-zinc-100" : "bg-[#E2E8F0] text-slate-800"} flex items-center justify-center font-mono text-xs`}>
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#4F46E5] animate-ping" />
-          <span className="font-bold">Initializing AI Learning Engine...</span>
+      <div
+        className={`min-h-screen ${
+          isDark ? "bg-[#0B0B0D] text-[#F5F5F7]" : "bg-[#F5F5F7] text-[#1D1D1F]"
+        } flex items-center justify-center text-sm font-medium`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 rounded-full border-2 border-[#0071E3] border-t-transparent animate-spin" />
+          <span>Connecting to NeuroQuest...</span>
         </div>
       </div>
     );
   }
 
-  const isRiso = activeTheme === "warm-editorial";
+  // Unified calm Apple canvas palette across light/warm/dark themes
+  let themeBg = "bg-[#F2F4F8] text-[#1D1D1F]";
+  if (activeTheme === "minimal-light") themeBg = "bg-[#F9FAFC] text-[#1D1D1F]";
+  if (isDark) themeBg = "bg-[#09090C] text-[#F5F5F7]";
+  if (activeTheme === "warm-editorial") themeBg = "bg-[#F7F5F1] text-[#1D1D1F]";
 
-  // Theme-specific root wrapper style
-  let themeBg = "bg-[#E2E8F0] text-[#1E293B] theme-neumorphic";
-  if (activeTheme === "minimal-light") themeBg = "bg-[#FAFAFA] text-[#09090B]";
-  if (isDark) themeBg = "bg-[#18181B] text-[#F4F4F5]";
-  if (activeTheme === "warm-editorial") themeBg = "bg-[#FBF9F4] text-[#1E1B18]";
+  const ambientBackdrop = (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden transition-opacity duration-700"
+    >
+      <div
+        className={`absolute -top-36 -left-24 w-[480px] h-[480px] rounded-full blur-[110px] transition-colors duration-700 ${
+          isDark
+            ? activeTheme === "obsidian-gold"
+              ? "bg-amber-500/[0.10]"
+              : "bg-[#2997FF]/[0.13]"
+            : activeTheme === "warm-editorial"
+            ? "bg-amber-300/[0.18]"
+            : "bg-[#0071E3]/[0.09]"
+        }`}
+      />
+      <div
+        className={`absolute top-1/3 -right-28 w-[440px] h-[440px] rounded-full blur-[120px] transition-colors duration-700 ${
+          isDark
+            ? activeTheme === "obsidian-gold"
+              ? "bg-sky-500/[0.08]"
+              : "bg-indigo-500/[0.09]"
+            : activeTheme === "warm-editorial"
+            ? "bg-rose-300/[0.12]"
+            : "bg-sky-300/[0.14]"
+        }`}
+      />
+      <div
+        className={`absolute -bottom-32 left-1/3 w-[460px] h-[460px] rounded-full blur-[120px] transition-colors duration-700 ${
+          isDark
+            ? "bg-emerald-500/[0.06]"
+            : activeTheme === "warm-editorial"
+            ? "bg-orange-200/[0.14]"
+            : "bg-emerald-300/[0.09]"
+        }`}
+      />
+    </div>
+  );
 
   // If not logged in, display the full Login Starter Page first!
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !user) {
     return (
-      <div
-        className={`min-h-screen ${themeBg} font-sans selection:bg-[#4F46E5]/20 selection:text-[#4F46E5] transition-colors duration-300 relative overflow-x-hidden`}
-      >
-        <ParticleBackground theme={activeTheme} isDark={isDark} />
-        <div className="relative z-10 w-full min-h-screen flex flex-col justify-center">
-          <AuthStarterView
-            onLoginSuccess={handleLoginSuccess}
-            activeTheme={activeTheme}
-            onToggleTheme={handleToggleTheme}
-          />
+      <MotionConfig reducedMotion="user">
+        <div
+          className={`min-h-screen ${themeBg} font-sans selection:bg-[#0071E3]/15 selection:text-[#0071E3] transition-colors duration-500 relative overflow-x-hidden`}
+        >
+          {ambientBackdrop}
+          <div className="relative z-10 w-full min-h-screen flex flex-col justify-center">
+            <AuthStarterView
+              onLoginSuccess={handleLoginSuccess}
+              activeTheme={activeTheme}
+              onToggleTheme={handleToggleTheme}
+            />
+          </div>
         </div>
-      </div>
+      </MotionConfig>
     );
   }
 
   return (
-    <div
-      className={`min-h-screen ${themeBg} font-sans selection:bg-[#4F46E5]/20 selection:text-[#4F46E5] transition-colors duration-300 relative overflow-x-hidden`}
-    >
-      {/* Interactive Ambient Falling Particle Canvas with Scrolling Parallax Physics */}
-      <ParticleBackground theme={activeTheme} isDark={isDark} />
+    <MotionConfig reducedMotion="user">
+      <div
+        className={`min-h-screen ${themeBg} font-sans selection:bg-[#0071E3]/15 selection:text-[#0071E3] transition-colors duration-500 relative overflow-x-hidden`}
+      >
+        {ambientBackdrop}
 
-      {/* Responsive App Shell: auto-flexible across mobile, tablet, desktop, and all aspect ratios */}
-      <div className="relative z-10 w-full min-h-screen flex flex-col">
-        {/* Top Header (Shown on Home, Lab, League, You) */}
-        {currentTab !== "quest" && (
-          <TopHeader
-            user={user}
-            activeCourse={activeCourse}
-            onOpenCoursePicker={() => setIsCoursePickerOpen(true)}
-            onOpenSparksModal={() => setIsSparksModalOpen(true)}
-            onOpenStreakModal={() => setIsStreakModalOpen(true)}
-            onOpenGiftModal={() => setIsGiftModalOpen(true)}
-            onToggleTheme={handleToggleTheme}
-            theme={activeTheme}
-          />
-        )}
+        {/* Responsive App Shell */}
+        <div className="relative z-10 w-full min-h-screen flex flex-col">
+          {/* Top Header (Shown on Home, Lab, League, You) */}
+          {currentTab !== "quest" && (
+            <TopHeader
+              user={user}
+              activeCourse={activeCourse}
+              onOpenCoursePicker={() => setIsCoursePickerOpen(true)}
+              onOpenSparksModal={() => setIsSparksModalOpen(true)}
+              onOpenStreakModal={() => setIsStreakModalOpen(true)}
+              onOpenGiftModal={() => setIsGiftModalOpen(true)}
+              onToggleTheme={handleToggleTheme}
+              theme={activeTheme}
+            />
+          )}
 
-        {/* Dynamic View Body */}
-        <main className="flex-1">
-          <AnimatePresence mode="wait" custom={tabDirection}>
-            {currentTab === "home" && (
-              <motion.div
-                key="home"
-                custom={tabDirection}
-                variants={sectionVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <HomePathView
-                  stages={stages}
-                  activeCourse={activeCourse}
-                  onOpenCoursePicker={() => setIsCoursePickerOpen(true)}
-                  user={user}
-                  onSelectQuest={handleSelectQuest}
-                  onClaimChest={handleClaimChest}
-                  onOpenTutor={() => setIsTutorOpen(true)}
-                  onAddXP={handleAddXP}
-                  theme={activeTheme}
-                />
-              </motion.div>
-            )}
+          {/* Dynamic View Body */}
+          <main className="flex-1">
+            <AnimatePresence mode="wait" custom={tabDirection}>
+              {currentTab === "home" && (
+                <motion.div
+                  key="home"
+                  custom={tabDirection}
+                  variants={sectionVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <HomePathView
+                    stages={stages}
+                    activeCourse={activeCourse}
+                    onOpenCoursePicker={() => setIsCoursePickerOpen(true)}
+                    user={user}
+                    onSelectQuest={handleSelectQuest}
+                    onClaimChest={handleClaimChest}
+                    onOpenTutor={() => setIsTutorOpen(true)}
+                    onAddXP={handleAddXP}
+                    theme={activeTheme}
+                  />
+                </motion.div>
+              )}
 
-            {currentTab === "lab" && (
-              <motion.div
-                key="lab"
-                custom={tabDirection}
-                variants={sectionVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <LabView
-                  user={user}
-                  stages={stages}
-                  onStartLesson={(q, st) => handleSelectQuest(q, st)}
-                  onAddSparks={handleAddSparks}
-                  theme={activeTheme}
-                />
-              </motion.div>
-            )}
+              {currentTab === "lab" && (
+                <motion.div
+                  key="lab"
+                  custom={tabDirection}
+                  variants={sectionVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <LabView
+                    user={user}
+                    stages={stages}
+                    onStartLesson={(q, st) => handleSelectQuest(q, st)}
+                    onAddSparks={handleAddSparks}
+                    theme={activeTheme}
+                  />
+                </motion.div>
+              )}
 
-            {currentTab === "league" && (
-              <motion.div
-                key="league"
-                custom={tabDirection}
-                variants={sectionVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <LeagueView user={user} theme={activeTheme} />
-              </motion.div>
-            )}
+              {currentTab === "league" && (
+                <motion.div
+                  key="league"
+                  custom={tabDirection}
+                  variants={sectionVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <LeagueView user={user} theme={activeTheme} />
+                </motion.div>
+              )}
 
-            {currentTab === "you" && (
-              <motion.div
-                key="you"
-                custom={tabDirection}
-                variants={sectionVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <YouView
-                  user={user}
-                  stages={stages}
-                  onSetTheme={handleSetTheme}
-                  onSetMascotRole={handleSetMascotRole}
-                  onAddSparks={handleAddSparks}
-                  onResetProgress={handleResetProgress}
-                  onSetStreakDays={async (days) => {
-                    const updated = await dataStore.setStreakDays(days);
-                    setUser(updated);
+              {currentTab === "you" && (
+                <motion.div
+                  key="you"
+                  custom={tabDirection}
+                  variants={sectionVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <YouView
+                    user={user}
+                    stages={stages}
+                    onSetTheme={handleSetTheme}
+                    onSetMascotRole={handleSetMascotRole}
+                    onAddSparks={handleAddSparks}
+                    onResetProgress={handleResetProgress}
+                    onSetStreakDays={async (days) => {
+                      const updated = await dataStore.setStreakDays(days);
+                      setUser(updated);
+                    }}
+                    onCompleteQuest={handleCompleteQuest}
+                    onLogOut={handleLogOut}
+                    onUpdateUser={(updated) => setUser(updated)}
+                    theme={activeTheme}
+                  />
+                </motion.div>
+              )}
+
+              {currentTab === "quest" && activeQuest && (
+                <motion.div
+                  key={`quest-${activeQuest.quest.id}`}
+                  initial={{ opacity: 0, y: 18, scale: 0.985 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -14, scale: 0.985 }}
+                  transition={{
+                    duration: 0.34,
+                    ease: [0.22, 1, 0.36, 1],
                   }}
-                  onCompleteQuest={handleCompleteQuest}
-                  onLogOut={handleLogOut}
-                  onUpdateUser={(updated) => setUser(updated)}
-                  theme={activeTheme}
-                />
-              </motion.div>
-            )}
+                >
+                  <QuestView
+                    quest={activeQuest.quest}
+                    stage={activeQuest.stage}
+                    onBackToJourney={() => switchTab("home")}
+                    onCompleteQuest={handleCompleteQuest}
+                    onOpenTutor={(title, phase) => {
+                      setTutorContext((prev) => ({
+                        ...prev,
+                        questTitle: title || prev.questTitle,
+                        phase: phase || prev.phase,
+                      }));
+                      setIsTutorOpen(true);
+                    }}
+                    onNavigateNextQuest={handleNavigateNextQuest}
+                    onToggleTheme={handleToggleTheme}
+                    theme={activeTheme}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
 
-            {currentTab === "quest" && activeQuest && (
-              <motion.div
-                key={`quest-${activeQuest.quest.id}`}
-                initial={{ opacity: 0, y: 24, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.97 }}
-                transition={{
-                  duration: 0.28,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-              >
-                <QuestView
-                  quest={activeQuest.quest}
-                  stage={activeQuest.stage}
-                  onBackToJourney={() => switchTab("home")}
-                  onCompleteQuest={handleCompleteQuest}
-                  onOpenTutor={(title, phase) => {
-                    setTutorContext((prev) => ({
-                      ...prev,
-                      questTitle: title || prev.questTitle,
-                      phase: phase || prev.phase,
-                    }));
-                    setIsTutorOpen(true);
-                  }}
-                  onNavigateNextQuest={handleNavigateNextQuest}
-                  onToggleTheme={handleToggleTheme}
-                  theme={activeTheme}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
+          {/* Persistent Bottom Dock (Hidden only when in full quest challenge mode) */}
+          {currentTab !== "quest" && (
+            <BottomNav
+              currentTab={currentTab}
+              onSelectTab={(tab) => {
+                switchTab(tab);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              theme={activeTheme}
+            />
+          )}
+        </div>
 
-        {/* Persistent 5-Tab Bottom Dock (Hidden only when in full quest challenge mode) */}
-        {currentTab !== "quest" && (
-          <BottomNav
-            currentTab={currentTab}
-            onSelectTab={(tab) => {
-              switchTab(tab);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            theme={activeTheme}
-          />
-        )}
+        {/* Socratic Neuro AI Tutor Drawer */}
+        <NeuroTutorDrawer
+          isOpen={isTutorOpen}
+          onClose={() => setIsTutorOpen(false)}
+          activeQuestTitle={tutorContext.questTitle}
+          activeStageTitle={tutorContext.stageTitle}
+          activePhase={tutorContext.phase}
+          theme={activeTheme}
+        />
+
+        {/* Modal: Course Picker */}
+        <CoursePickerModal
+          isOpen={isCoursePickerOpen}
+          onClose={() => setIsCoursePickerOpen(false)}
+          courses={courses}
+          activeCourseId={activeCourse.id}
+          onSelectCourse={(c) => setActiveCourse(c)}
+          theme={activeTheme}
+        />
+
+        {/* Modal: Sparks Refill & Demo */}
+        <SparksModal
+          isOpen={isSparksModalOpen}
+          onClose={() => setIsSparksModalOpen(false)}
+          currentSparks={user.sparks ?? 45}
+          onAddSparks={handleAddSparks}
+          theme={activeTheme}
+        />
+
+        {/* Modal: Streak Calendar */}
+        <StreakModal
+          isOpen={isStreakModalOpen}
+          onClose={() => setIsStreakModalOpen(false)}
+          streakDays={user.streakDays || 1}
+          theme={activeTheme}
+        />
+
+        {/* Modal: Daily Gift Box */}
+        <DailyGiftModal
+          isOpen={isGiftModalOpen}
+          onClose={() => setIsGiftModalOpen(false)}
+          onClaimReward={async (sparks, xp) => {
+            await dataStore.addSparks(sparks);
+            const updated = await dataStore.getUserProfile();
+            setUser(updated);
+          }}
+          theme={activeTheme}
+        />
       </div>
-
-      {/* Socratic Neuro AI Tutor Drawer */}
-      <NeuroTutorDrawer
-        isOpen={isTutorOpen}
-        onClose={() => setIsTutorOpen(false)}
-        activeQuestTitle={tutorContext.questTitle}
-        activeStageTitle={tutorContext.stageTitle}
-        activePhase={tutorContext.phase}
-        theme={activeTheme}
-      />
-
-      {/* Modal: Course Picker */}
-      <CoursePickerModal
-        isOpen={isCoursePickerOpen}
-        onClose={() => setIsCoursePickerOpen(false)}
-        courses={courses}
-        activeCourseId={activeCourse.id}
-        onSelectCourse={(c) => setActiveCourse(c)}
-        theme={activeTheme}
-      />
-
-      {/* Modal: Sparks Refill & Demo */}
-      <SparksModal
-        isOpen={isSparksModalOpen}
-        onClose={() => setIsSparksModalOpen(false)}
-        currentSparks={user.sparks ?? 45}
-        onAddSparks={handleAddSparks}
-        theme={activeTheme}
-      />
-
-      {/* Modal: Streak Calendar */}
-      <StreakModal
-        isOpen={isStreakModalOpen}
-        onClose={() => setIsStreakModalOpen(false)}
-        streakDays={user.streakDays || 1}
-        theme={activeTheme}
-      />
-
-      {/* Modal: Daily Gift Box */}
-      <DailyGiftModal
-        isOpen={isGiftModalOpen}
-        onClose={() => setIsGiftModalOpen(false)}
-        onClaimReward={async (sparks, xp) => {
-          await dataStore.addSparks(sparks);
-          const updated = await dataStore.getUserProfile();
-          setUser(updated);
-        }}
-        theme={activeTheme}
-      />
-    </div>
+    </MotionConfig>
   );
 }

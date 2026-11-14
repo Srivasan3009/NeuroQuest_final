@@ -23,6 +23,12 @@ export const SparksModal: React.FC<SparksModalProps> = ({
   const [demoProgress, setDemoProgress] = useState(0);
   const [claimed, setClaimed] = useState(false);
 
+  const isDark =
+    theme === "obsidian-gold" ||
+    theme === "obsidian-noir" ||
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
+
   const handleWatchDemo = () => {
     setIsPlayingDemo(true);
     setDemoProgress(0);
@@ -43,9 +49,6 @@ export const SparksModal: React.FC<SparksModalProps> = ({
     }, 400);
   };
 
-  const isNeumorphic = theme === "neumorphic";
-  const isDark = theme === "obsidian-gold" || theme === "obsidian-noir";
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -54,112 +57,95 @@ export const SparksModal: React.FC<SparksModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/45 backdrop-blur-sm"
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 14 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            className={`relative z-10 w-full max-w-md rounded-3xl p-6 space-y-5 transition-all ${
-              isNeumorphic
-                ? "neu-raised text-slate-800"
-                : isDark
-                ? "bg-[#18181B] border-2 border-[#3F3F46] shadow-2xl text-zinc-100"
-                : "bg-[#FFFDF9] border-2 border-[#1E1B18] shadow-[5px_5px_0px_#1E1B18] text-[#1E1B18]"
+            exit={{ opacity: 0, scale: 0.96, y: 14 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative z-10 w-full max-w-md rounded-3xl p-6 space-y-5 apple-surface ${
+              isDark ? "text-zinc-100" : "text-[#1D1D1F]"
             }`}
           >
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.92 }}
               onClick={onClose}
-              className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors ${
-                isNeumorphic
-                  ? "neu-btn text-slate-600 hover:text-slate-950"
-                  : isDark
-                  ? "border border-[#3F3F46] text-zinc-400 hover:text-zinc-100"
-                  : "border border-[#1E1B18] text-[#1E1B18] bg-white hover:bg-zinc-100"
+              aria-label="Close Sparks modal"
+              className={`absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                isDark
+                  ? "bg-white/[0.08] text-zinc-300 hover:bg-white/[0.14]"
+                  : "bg-black/[0.05] text-[#6E6E73] hover:bg-black/[0.08] hover:text-[#1D1D1F]"
               }`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </motion.button>
 
-            {/* Big Sparks Header */}
+            {/* Balance Header */}
             <div className="text-center space-y-2 pt-2">
-              <motion.div
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-                className={`w-16 h-16 mx-auto rounded-3xl flex items-center justify-center ${
-                  isNeumorphic
-                    ? "neu-inset text-amber-500"
-                    : isDark
-                    ? "bg-amber-500/20 border-2 border-amber-400 text-amber-300 shadow-md"
-                    : "bg-[#FEF08A] border-2 border-[#1E1B18] text-[#1E1B18] shadow-md"
+              <div
+                className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center ${
+                  isDark
+                    ? "bg-amber-400/15 text-amber-400"
+                    : "bg-amber-500/10 text-amber-600"
                 }`}
               >
-                <Zap className="w-9 h-9 fill-current" />
-              </motion.div>
-              <h2 className="text-2xl font-black tracking-tight uppercase">
+                <Zap className="w-7 h-7 fill-current" />
+              </div>
+              <h2 className="font-display text-2xl font-bold tracking-tight tabular-nums">
                 {currentSparks} Sparks
               </h2>
               <p
-                className={`text-xs max-w-xs mx-auto ${
-                  isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"
+                className={`text-xs max-w-xs mx-auto leading-relaxed ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
                 }`}
               >
-                Sparks power deep queries with NEUROBOT. Each AI tutor response consumes 2 Sparks.
+                Sparks power your study progression, unlocks, and deep AI tutoring sessions.
               </p>
             </div>
 
-            {/* Demo Reward Card */}
-            <div
-              className={`rounded-2xl p-4 space-y-3 transition-all ${
-                isNeumorphic
-                  ? "neu-flat"
-                  : isDark
-                  ? "bg-[#27272A] border-2 border-[#3F3F46]"
-                  : "bg-[#FEF08A]/40 border-2 border-[#1E1B18]"
-              }`}
-            >
+            {/* Quick Recharge Card */}
+            <div className="rounded-2xl p-4 space-y-3 apple-surface-muted">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-black uppercase tracking-wide">
-                    Quick AI Demo
-                  </span>
+                  <span className="text-sm font-semibold">Quick AI Snapshot</span>
                 </div>
                 <span
-                  className={`text-xs font-mono font-black px-2 py-0.5 rounded-full ${
-                    isNeumorphic
-                      ? "neu-inset text-amber-600"
-                      : isDark
-                      ? "bg-amber-950 text-amber-300 border border-amber-500/40"
-                      : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
+                  className={`text-xs font-mono tabular-nums font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${
+                    isDark
+                      ? "bg-amber-400/15 text-amber-300"
+                      : "bg-amber-500/10 text-amber-700"
                   }`}
                 >
                   +5 Sparks
                 </span>
               </div>
 
-              <p className={`text-xs leading-relaxed ${isNeumorphic ? "text-slate-600" : isDark ? "text-zinc-400" : "text-zinc-700"}`}>
-                Watch a 2-second interactive AI research snapshot to immediately recharge 5 free Sparks.
+              <p
+                className={`text-xs leading-relaxed ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
+                Run a 2-second interactive calibration snapshot to earn 5 Sparks right away.
               </p>
 
               {isPlayingDemo ? (
-                <div className="space-y-1.5 pt-1">
+                <div className="space-y-2 pt-1">
                   <div
-                    className={`flex items-center justify-between text-[11px] font-mono font-bold ${
-                      isNeumorphic ? "text-amber-600" : isDark ? "text-amber-400" : "text-[#4F46E5]"
+                    className={`flex items-center justify-between text-xs font-mono tabular-nums ${
+                      isDark ? "text-zinc-300" : "text-[#1D1D1F]"
                     }`}
                   >
-                    <span>Calibrating Neural Weights...</span>
+                    <span>Calibrating neural weights...</span>
                     <span>{demoProgress}%</span>
                   </div>
-                  <div className={`w-full h-2.5 rounded-full overflow-hidden ${isNeumorphic ? "neu-inset" : "bg-zinc-200 dark:bg-zinc-800 border border-zinc-400"}`}>
+                  <div className="w-full h-2 rounded-full overflow-hidden neu-progress-track">
                     <motion.div
-                      className="h-full bg-amber-400"
+                      className="h-full bg-[#0071E3] rounded-full"
                       animate={{ width: `${demoProgress}%` }}
                       transition={{ duration: 0.3 }}
                     />
@@ -167,54 +153,37 @@ export const SparksModal: React.FC<SparksModalProps> = ({
                 </div>
               ) : claimed ? (
                 <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
+                  initial={{ scale: 0.94, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="flex items-center justify-center gap-2 py-2 text-emerald-600 dark:text-emerald-400 text-xs font-black font-mono"
+                  className="flex items-center justify-center gap-2 py-2.5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>+5 Sparks Added to Balance!</span>
+                  <span>+5 Sparks added to your balance</span>
                 </motion.div>
               ) : (
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.96 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleWatchDemo}
-                  className={`w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-transform ${
-                    isNeumorphic
-                      ? "neu-btn-primary text-white"
-                      : isDark
-                      ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 shadow-md"
-                      : "bg-[#1E1B18] text-white hover:bg-black shadow-[2px_2px_0px_#1E1B18]"
-                  }`}
+                  className="w-full py-2.5 px-4 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white font-medium text-xs flex items-center justify-center gap-2 transition-colors whitespace-nowrap"
                 >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Watch Demo & Earn +5 Sparks</span>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Run Snapshot & Earn +5 Sparks</span>
                 </motion.button>
               )}
             </div>
 
-            {/* Tips on earning sparks card */}
-            <div
-              className={`rounded-2xl p-4 space-y-2 transition-all ${
-                isNeumorphic
-                  ? "neu-flat"
-                  : isDark
-                  ? "bg-[#27272A] border-2 border-[#3F3F46]"
-                  : "bg-[#EEF2FF] border-2 border-[#1E1B18]"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                    isNeumorphic ? "text-indigo-600" : isDark ? "text-amber-300" : "text-[#4F46E5]"
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>How to Earn Sparks</span>
-                </span>
+            {/* Guide Box */}
+            <div className="rounded-2xl p-4 space-y-1.5 apple-surface-muted">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0071E3] dark:text-[#2997FF]">
+                <Sparkles className="w-4 h-4" />
+                <span>How to Earn More</span>
               </div>
-              <p className={`text-xs ${isNeumorphic ? "text-slate-600" : isDark ? "text-zinc-300" : "text-zinc-700"}`}>
-                Complete quests (+10 Sparks), claim your Daily Mystery Gift, maintain daily streaks, and watch quick interactive demos to replenish Sparks anytime!
+              <p
+                className={`text-xs leading-relaxed ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
+                Complete quests (+10 Sparks), open your Daily Mystery Gift, keep your study streak alive, or run quick snapshots anytime.
               </p>
             </div>
           </motion.div>

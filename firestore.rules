@@ -1,17 +1,305 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User profile and data can be read/written by authenticated owner
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    match /user_progress/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    match /user_settings/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // =========================================================================
+    // Hardened Global Helpers
+    // =========================================================================
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidTheme(theme) {
+      return theme is string && theme.size() <= 32 && theme in [
+        'neumorphic',
+        'riso-pop',
+        'warm-editorial',
+        'minimal-light',
+        'obsidian-noir',
+        'obsidian-gold',
+        'neon-matrix',
+        'cyber-dark'
+      ];
+    }
+
+    function isValidMascotRole(role) {
+      return role is string && role.size() <= 32 && role in [
+        'detective',
+        'focus',
+        'builder',
+        'data',
+        'sage',
+        'architect'
+      ];
+    }
+
+    function isValidStringList(arr, maxLen) {
+      return arr is list && arr.size() <= maxLen && (
+        arr.size() == 0 || (arr[0] is string && arr[0].size() <= 64)
+      );
+    }
+
+    function isValidMapList(arr, maxLen) {
+      return arr is list && arr.size() <= maxLen && (
+        arr.size() == 0 || arr[0] is map
+      );
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints
+    // =========================================================================
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+        'id',
+        'email',
+        'fullName',
+        'username',
+        'avatarUrl',
+        'level',
+        'xp',
+        'sparks',
+        'streakDays',
+        'lastActiveDate',
+        'currentStageId',
+        'completedQuestIds',
+        'inProgressQuestIds',
+        'openedChests',
+        'mascotRole',
+        'isPlus',
+        'theme',
+        'questScores',
+        'skills',
+        'achievements',
+        'joinedDate',
+        'authProvider',
+        'createdAt',
+        'updatedAt'
+      ]) && data.keys().hasOnly([
+        'id',
+        'email',
+        'fullName',
+        'username',
+        'age',
+        'avatarUrl',
+        'level',
+        'xp',
+        'sparks',
+        'streakDays',
+        'lastActiveDate',
+        'currentStageId',
+        'completedQuestIds',
+        'inProgressQuestIds',
+        'openedChests',
+        'mascotRole',
+        'isPlus',
+        'theme',
+        'questScores',
+        'skills',
+        'achievements',
+        'joinedDate',
+        'authProvider',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      isValidId(data.id) &&
+      data.id == userId &&
+      data.id == request.auth.uid &&
+      data.email is string && data.email.size() <= 254 &&
+      data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100 &&
+      data.username is string && data.username.size() >= 1 && data.username.size() <= 50 &&
+      (!('age' in data) || (data.age is number && data.age >= 1 && data.age <= 150)) &&
+      data.avatarUrl is string && data.avatarUrl.size() <= 200000 &&
+      data.level is number && data.level >= 1 && data.level <= 100 &&
+      data.xp is number && data.xp >= 0 && data.xp <= 10000000 &&
+      data.sparks is number && data.sparks >= 0 && data.sparks <= 10000000 &&
+      data.streakDays is number && data.streakDays >= 0 && data.streakDays <= 36500 &&
+      data.lastActiveDate is string && data.lastActiveDate.size() <= 32 &&
+      data.currentStageId is string && data.currentStageId.size() <= 64 &&
+      isValidStringList(data.completedQuestIds, 200) &&
+      isValidStringList(data.inProgressQuestIds, 50) &&
+      isValidStringList(data.openedChests, 100) &&
+      isValidMascotRole(data.mascotRole) &&
+      data.isPlus is bool &&
+      isValidTheme(data.theme) &&
+      data.questScores is map && data.questScores.keys().size() <= 200 &&
+      isValidMapList(data.skills, 50) &&
+      isValidMapList(data.achievements, 100) &&
+      data.joinedDate is string && data.joinedDate.size() <= 64 &&
+      data.authProvider is string && data.authProvider.size() <= 32 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidLeaderboardEntry(data, userId) {
+      return data.keys().hasAll([
+        'uid',
+        'fullName',
+        'username',
+        'avatarUrl',
+        'sparks',
+        'xp',
+        'level',
+        'completedQuestsCount',
+        'isPublic',
+        'createdAt',
+        'updatedAt'
+      ]) && data.keys().hasOnly([
+        'uid',
+        'fullName',
+        'username',
+        'avatarUrl',
+        'sparks',
+        'xp',
+        'level',
+        'completedQuestsCount',
+        'isPublic',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      isValidId(data.uid) &&
+      data.uid == userId &&
+      data.uid == request.auth.uid &&
+      data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100 &&
+      data.username is string && data.username.size() >= 1 && data.username.size() <= 50 &&
+      data.avatarUrl is string && data.avatarUrl.size() <= 200000 &&
+      data.sparks is number && data.sparks >= 0 && data.sparks <= 10000000 &&
+      data.xp is number && data.xp >= 0 && data.xp <= 10000000 &&
+      data.level is number && data.level >= 1 && data.level <= 100 &&
+      data.completedQuestsCount is number && data.completedQuestsCount >= 0 && data.completedQuestsCount <= 500 &&
+      data.isPublic is bool && data.isPublic == true &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection Rules
+    // =========================================================================
+
+    // Owner-private user profile, PII, preferences, and curriculum progress
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Update learning progress (XP, quests, chests, streaks, skills, achievements)
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'level',
+            'xp',
+            'sparks',
+            'streakDays',
+            'lastActiveDate',
+            'currentStageId',
+            'completedQuestIds',
+            'inProgressQuestIds',
+            'openedChests',
+            'questScores',
+            'skills',
+            'achievements',
+            'updatedAt'
+          ]) ||
+          // Action: Update profile & preferences (avatar, name, theme, mascot, subscription)
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'email',
+            'fullName',
+            'username',
+            'age',
+            'avatarUrl',
+            'mascotRole',
+            'isPlus',
+            'sparks',
+            'theme',
+            'authProvider',
+            'lastActiveDate',
+            'updatedAt'
+          ]) ||
+          // Action: Reset progress
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'sparks',
+            'openedChests',
+            'completedQuestIds',
+            'inProgressQuestIds',
+            'xp',
+            'level',
+            'questScores',
+            'achievements',
+            'skills',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(userId) && isOwner(userId);
+    }
+
+    // Public non-PII League Leaderboard entries
+    match /leaderboard/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (isOwner(userId) || (resource != null && resource.data.isPublic == true));
+      allow list: if isSignedIn() && resource.data.isPublic == true;
+
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'fullName',
+          'username',
+          'avatarUrl',
+          'sparks',
+          'xp',
+          'level',
+          'completedQuestsCount',
+          'isPublic',
+          'updatedAt'
+        ]);
+
+      allow delete: if isVerifiedUser() && isValidId(userId) && isOwner(userId);
     }
   }
 }

@@ -5,7 +5,7 @@ import {
   Check,
   X,
   RefreshCw,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { UserProfile, AppTheme } from "../../types";
 import { soundFx } from "../../utils/sound";
@@ -25,8 +25,11 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   onSaveAvatar,
   theme = "neumorphic",
 }) => {
-  const isDark = theme === "obsidian-gold" || theme === "obsidian-noir";
-  const isNeumorphic = theme === "neumorphic";
+  const isDark =
+    theme === "obsidian-gold" ||
+    theme === "obsidian-noir" ||
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
 
   const [previewUrl, setPreviewUrl] = useState<string>(user.avatarUrl || "");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,10 +41,11 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Compress & resize image to max 360x360 with Canvas for optimal local storage
   const processImageFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setErrorMessage("Please select a valid image file (PNG, JPG, WEBP, GIF).");
+      setErrorMessage(
+        "Please select a valid image file (PNG, JPG, WEBP, GIF)."
+      );
       soundFx.playWrong();
       return;
     }
@@ -91,7 +95,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.88);
           setPreviewUrl(compressedDataUrl);
           soundFx.playTap();
-          setSuccessMessage("Photo ready! Click 'Save Photo' to apply.");
+          setSuccessMessage("Photo ready. Save to apply.");
         }
         setIsProcessing(false);
       };
@@ -110,46 +114,32 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      processImageFile(file);
-    }
+    if (file) processImageFile(file);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) {
-      processImageFile(file);
-    }
+    if (file) processImageFile(file);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  // Save changes
   const handleSave = async () => {
     setIsProcessing(true);
     try {
       soundFx.playMissionComplete();
       await onSaveAvatar(previewUrl);
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       soundFx.playWrong();
-      setErrorMessage(err.message || "Failed to update profile picture.");
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to update profile picture."
+      );
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Reset to initials / blank
   const handleResetToInitials = async () => {
     setIsProcessing(true);
     try {
@@ -165,31 +155,34 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        className={`w-full max-w-md rounded-3xl p-6 space-y-5 transition-all shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
-          isDark
-            ? "bg-zinc-900 border border-zinc-800 text-zinc-100"
-            : isNeumorphic
-            ? "bg-[#E2E8F0] border border-white/80 text-slate-800 shadow-[10px_10px_30px_#c5cbd5,-10px_-10px_30px_#ffffff]"
-            : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18]"
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-1 border-b border-black/10 dark:border-white/10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+      <div className="apple-surface w-full max-w-md rounded-3xl p-6 space-y-5 overflow-hidden max-h-[90vh] flex flex-col">
+        <div
+          className={`flex items-center justify-between pb-3 border-b ${
+            isDark ? "border-white/[0.08]" : "border-black/[0.06]"
+          }`}
+        >
           <div className="flex items-center gap-2.5">
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
+              className={`w-8 h-8 rounded-xl flex items-center justify-center ${
                 isDark
-                  ? "bg-zinc-800 text-amber-400 border border-zinc-700"
-                  : "bg-white text-indigo-600 shadow-sm"
+                  ? "bg-[#2997FF]/15 text-[#2997FF]"
+                  : "bg-[#0071E3]/10 text-[#0071E3]"
               }`}
             >
               <Camera className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold tracking-tight">Upload Profile Picture</h3>
-              <p className="text-[11px] opacity-60">Personalize your cadet avatar</p>
+              <h3 className="text-sm font-bold tracking-tight">
+                Profile Photo
+              </h3>
+              <p
+                className={`text-xs ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
+                Customize your avatar
+              </p>
             </div>
           </div>
 
@@ -200,14 +193,14 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
               soundFx.playTap();
               onClose();
             }}
-            className="p-1.5 rounded-xl opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+            className="p-1.5 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Live Preview Display */}
-        <div className="flex items-center gap-4 p-3.5 rounded-2xl bg-black/5 dark:bg-white/5">
+        {/* Preview */}
+        <div className="apple-surface-muted flex items-center gap-4 p-3.5 rounded-2xl">
           <div className="relative shrink-0">
             {previewUrl ? (
               <img
@@ -215,48 +208,46 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 alt={user.fullName || "Cadet Profile"}
                 referrerPolicy="no-referrer"
                 crossOrigin="anonymous"
-                onError={() => {
-                  setErrorMessage("Avatar image failed to load. Please choose another.");
-                }}
-                className={`w-16 h-16 rounded-full object-cover border-2 shadow-md ${
-                  isDark ? "border-amber-400" : "border-indigo-600"
-                }`}
+                onError={() =>
+                  setErrorMessage(
+                    "Avatar image failed to load. Please choose another."
+                  )
+                }
+                className="w-14 h-14 rounded-full object-cover border border-black/10 dark:border-white/10"
               />
             ) : (
               <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black ${
+                className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold border ${
                   isDark
-                    ? "bg-amber-500/15 border-2 border-amber-400 text-amber-400"
-                    : "bg-white border-2 border-indigo-600 text-indigo-600 shadow-sm"
+                    ? "bg-[#1C1C1E] border-white/10 text-white"
+                    : "bg-white border-black/[0.06] text-[#1D1D1F]"
                 }`}
               >
                 {user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-emerald-500 text-white shadow">
-              <Check className="w-3 h-3" />
-            </div>
           </div>
 
-          <div className="space-y-1 min-w-0 flex-1">
-            <h4 className="font-bold text-sm truncate">{user.fullName || "Cadet"}</h4>
-            <p className="text-[11px] font-mono opacity-70 truncate">
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <h4 className="font-semibold text-sm truncate">
+              {user.fullName || "Cadet"}
+            </h4>
+            <p
+              className={`text-xs truncate ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
+              }`}
+            >
               {user.email || `@${user.username || "cadet"}`}
             </p>
-            <div className="flex items-center gap-2 pt-0.5">
-              <span
-                className={`text-[9px] uppercase font-mono px-2 py-0.5 rounded-full font-bold ${
-                  isDark ? "bg-amber-400/20 text-amber-300" : "bg-indigo-100 text-indigo-700"
-                }`}
-              >
-                {previewUrl ? "Photo Active" : "Initials Monogram"}
+            <div className="flex items-center gap-3 pt-1 text-xs">
+              <span className={isDark ? "text-[#2997FF]" : "text-[#0071E3]"}>
+                {previewUrl ? "Photo active" : "Initials"}
               </span>
               {previewUrl && (
                 <button
                   type="button"
                   onClick={handleResetToInitials}
-                  className="text-[11px] text-rose-500 hover:underline flex items-center gap-1"
-                  title="Remove photo"
+                  className="text-rose-500 hover:underline flex items-center gap-1"
                 >
                   <Trash2 className="w-3 h-3" />
                   <span>Remove</span>
@@ -266,8 +257,8 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           </div>
         </div>
 
-        {/* Photo Upload Area */}
-        <div className="space-y-3">
+        {/* Upload Dropzone */}
+        <div>
           <input
             ref={fileInputRef}
             type="file"
@@ -279,63 +270,75 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
           <div
             onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+            }}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-7 text-center cursor-pointer transition-all ${
+            className={`border border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors ${
               isDragOver
-                ? isDark
-                  ? "border-amber-400 bg-amber-400/10"
-                  : "border-indigo-600 bg-indigo-50"
+                ? "border-[#0071E3] bg-[#0071E3]/[0.05]"
                 : isDark
-                ? "border-zinc-700 hover:border-amber-400/80 bg-zinc-800/40 hover:bg-zinc-800/80"
-                : "border-slate-300 hover:border-indigo-500 bg-white/70 hover:bg-white"
+                ? "border-white/15 hover:border-[#2997FF]/50 bg-white/[0.02]"
+                : "border-black/15 hover:border-[#0071E3]/50 bg-black/[0.015]"
             }`}
           >
             <div
-              className={`w-12 h-12 mx-auto rounded-2xl flex items-center justify-center mb-2.5 transition-all ${
+              className={`w-10 h-10 mx-auto rounded-xl flex items-center justify-center mb-2.5 ${
                 isDark
-                  ? "bg-zinc-800 text-amber-400"
-                  : "bg-indigo-50 text-indigo-600"
+                  ? "bg-[#2997FF]/15 text-[#2997FF]"
+                  : "bg-[#0071E3]/10 text-[#0071E3]"
               }`}
             >
-              <Upload className="w-6 h-6" />
+              <Upload className="w-5 h-5" />
             </div>
-            <h4 className="font-bold text-xs">Choose photo from your device</h4>
-            <p className="text-[11px] opacity-60 mt-1">
-              Drag & drop your photo here, or click to browse
+            <h4 className="font-semibold text-xs">
+              Choose photo from device
+            </h4>
+            <p
+              className={`text-xs mt-1 ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
+              }`}
+            >
+              Drag and drop, or click to browse (PNG, JPG, WEBP up to 10MB)
             </p>
-            <span className="inline-block mt-2 text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 opacity-75">
-              PNG, JPG, WEBP, GIF up to 10MB
-            </span>
           </div>
         </div>
 
-        {/* Notices */}
         {errorMessage && (
-          <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
             <X className="w-3.5 h-3.5 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2">
             <Check className="w-3.5 h-3.5 shrink-0" />
             <span>{successMessage}</span>
           </div>
         )}
 
-        {/* Footer Actions */}
-        <div className="pt-2 border-t border-black/10 dark:border-white/10 flex items-center gap-2.5 justify-end">
+        {/* Footer */}
+        <div
+          className={`pt-3 border-t flex items-center gap-2.5 justify-end ${
+            isDark ? "border-white/[0.08]" : "border-black/[0.06]"
+          }`}
+        >
           <button
             type="button"
             onClick={() => {
               soundFx.playTap();
               onClose();
             }}
-            className={`py-2 px-3.5 rounded-xl text-xs font-semibold ${
-              isDark ? "hover:bg-zinc-800 text-zinc-300" : "hover:bg-slate-200 text-slate-700"
+            className={`py-2 px-4 rounded-full text-xs font-medium ${
+              isDark
+                ? "hover:bg-white/[0.08] text-zinc-300"
+                : "hover:bg-black/[0.05] text-[#6E6E73]"
             }`}
           >
             Cancel
@@ -346,11 +349,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             id="btn-save-avatar"
             disabled={isProcessing}
             onClick={handleSave}
-            className={`py-2.5 px-5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-md active:scale-[0.99] disabled:opacity-50 ${
-              isDark
-                ? "bg-amber-400 hover:bg-amber-300 text-zinc-950"
-                : "bg-[#4F46E5] hover:bg-[#4338CA] text-white"
-            }`}
+            className="py-2 px-5 rounded-full font-semibold text-xs bg-[#0071E3] hover:bg-[#0077ED] text-white flex items-center gap-1.5 transition-colors disabled:opacity-50"
           >
             {isProcessing ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />

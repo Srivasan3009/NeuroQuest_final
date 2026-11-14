@@ -57,3 +57,35 @@ NeuroQuest supports three distinct, high-polish themes:
 - ❌ No arbitrary floating glassmorphism overlays in dark mode.
 - ✅ Mathematical border-radius nesting: `Inner Radius = Outer Radius - Padding`.
 - ✅ Container outer padding strictly ≥ inner element spacing.
+
+---
+
+## 6. Installed Workspace Design Skills (`/skills/<name>/SKILL.md`)
+
+When implementing tasks covering any of the following domains, read the corresponding `/skills/<name>/SKILL.md` file first and follow its patterns:
+
+- `aframe-webxr`: A-Frame declarative WebXR & VR/AR scenes
+- `animated-component-libraries`: Animated UI component libraries (Magic UI, etc.)
+- `animejs`: Anime.js timeline, SVG, and DOM animations
+- `babylonjs-engine`: Babylon.js 3D & WebGPU engine workflows
+- `barba-js`: Barba.js smooth page transitions
+- `blender-web-pipeline`: Blender-to-web 3D asset & glTF optimization pipeline
+- `gsap-scrolltrigger`: GSAP & ScrollTrigger scroll-driven choreography
+- `lightweight-3d-effects`: Zdog, Vanta.js, and Vanilla-Tilt pseudo-3D micro-effects
+- `locomotive-scroll`: Locomotive Scroll smooth scrolling & parallax
+- `lottie-animations`: Lottie / dotLottie vector animations in React & web
+- `modern-web-design`: Modern web design principles, design systems, and scrollytelling
+- `motion-framer`: Framer Motion / Motion React springs, gestures, and layout transitions
+- `pixijs-2d`: PixiJS 2D WebGL/WebGPU canvas & particle systems
+- `playcanvas-engine`: PlayCanvas entity-component WebGL/WebGPU games & apps
+- `react-spring-physics`: React Spring & Popmotion physics-based animations
+- `react-three-fiber`: Declarative 3D scenes with React Three Fiber (R3F)
+- `rive-interactive`: Rive state-machine interactive vector animations
+- `scroll-reveal-libraries`: Lightweight scroll reveal animations (AOS)
+- `skill-creator`: Guidelines & scripts for authoring and validating skills
+- `spline-interactive`: Spline 3D visual scenes & React integration
+- `substance-3d-texturing`: Adobe Substance 3D PBR texturing & glTF material export
+- `threejs-webgl`: Three.js WebGL/WebGPU 3D scenes, shaders, and materials
+- `web3d-integration-patterns`: Meta-skill combining Three.js, R3F, GSAP, Motion, and React Spring
+- `ui_ux_pro_max`: UI/UX Pro Max design system guidance
+

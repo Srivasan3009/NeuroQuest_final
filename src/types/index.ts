@@ -210,5 +210,5 @@ export interface TutorChatMessage {
   timestamp: string;
   mode?: TutorMode;
   difficulty?: TutorDifficulty;
-  source?: "pedagogical_engine" | "fallback";
+  source?: "gemini" | "pedagogical_engine" | "fallback";
 }

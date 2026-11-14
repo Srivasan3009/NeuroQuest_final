@@ -8,6 +8,7 @@ import {
   Lightbulb,
   GraduationCap,
   Bot,
+  RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { TutorChatMessage, TutorDifficulty, TutorMode, AppTheme } from "../../types";
@@ -30,29 +31,48 @@ export const NeuroTutorDrawer: React.FC<NeuroTutorDrawerProps> = ({
   activePhase = "Learn",
   theme = "neumorphic",
 }) => {
-  const isNeumorphic = theme === "neumorphic";
-  const isDark = theme === "obsidian-gold" || theme === "obsidian-noir";
+  const isDark =
+    theme === "obsidian-gold" ||
+    theme === "obsidian-noir" ||
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
+
   const [difficulty, setDifficulty] = useState<TutorDifficulty>("intermediate");
-  const [messages, setMessages] = useState<TutorChatMessage[]>([
-    {
-      id: "welcome-msg",
-      sender: "neuro-ai",
-      text: `Welcome to your learning session! I am **Neuro AI**, your Socratic learning mentor. Rather than just giving answers, I help you build deep intuition.\n\nHow can I help you explore **${activeQuestTitle}** right now?`,
-      timestamp: "Just now",
-      source: "pedagogical_engine",
-    },
-  ]);
+
+  const createWelcomeMessage = (): TutorChatMessage => ({
+    id: "welcome-msg",
+    sender: "neuro-ai",
+    text: `Welcome to your study session. I'm NeuroBot, powered by Gemini. Instead of handing out shortcuts, I help you build lasting intuition.\n\nWhat would you like to explore in ${activeQuestTitle}?`,
+    timestamp: "Just now",
+  });
+
+  const [messages, setMessages] = useState<TutorChatMessage[]>([createWelcomeMessage()]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
+  const handleResetChat = () => {
+    setMessages([createWelcomeMessage()]);
+    setErrorBanner(null);
+  };
+
   const sendMessage = async (customPrompt?: string, mode: TutorMode = "chat") => {
     const textToSend = customPrompt || inputText;
     if (!textToSend.trim() || isLoading) return;
+
+    setErrorBanner(null);
+
+    const history = messages
+      .filter((m) => m.id !== "welcome-msg" && !m.id.startsWith("err-"))
+      .map((m) => ({
+        role: (m.sender === "user" ? "user" : "model") as "user" | "model",
+        text: m.text,
+      }));
 
     const userMessage: TutorChatMessage = {
       id: "usr-" + Date.now(),
@@ -73,6 +93,7 @@ export const NeuroTutorDrawer: React.FC<NeuroTutorDrawerProps> = ({
         currentPhase: activePhase,
         difficulty,
         mode,
+        history,
       });
 
       const aiMessage: TutorChatMessage = {
@@ -88,16 +109,11 @@ export const NeuroTutorDrawer: React.FC<NeuroTutorDrawerProps> = ({
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: "err-" + Date.now(),
-          sender: "neuro-ai",
-          text: "I experienced a brief interruption. Let's refocus on the current concept: what specific part would you like to dissect?",
-          timestamp: "Just now",
-          source: "fallback",
-        },
-      ]);
+      const errMsg =
+        err instanceof Error && err.message
+          ? err.message
+          : "Unable to reach NeuroBot right now. Please try again.";
+      setErrorBanner(errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -111,255 +127,260 @@ export const NeuroTutorDrawer: React.FC<NeuroTutorDrawerProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden pointer-events-none">
-          {/* Backdrop */}
+          {/* Frosted Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-xs pointer-events-auto"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto"
           />
 
-          {/* Drawer Body */}
+          {/* Slide-over Apple Sheet */}
           <motion.aside
             id="neuro-tutor-drawer"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            className={`absolute inset-y-0 right-0 w-full sm:w-[460px] flex flex-col pointer-events-auto ${
-              isNeumorphic
-                ? "neu-flat border-l border-slate-300 text-slate-800 shadow-2xl"
-                : isDark
-                ? "bg-[#18181B] text-zinc-100 border-l-2 border-[#3F3F46] shadow-2xl"
-                : "bg-[#FFFDF9] text-[#1E1B18] border-l-2 border-[#1E1B18] shadow-2xl"
+            transition={{ type: "spring", stiffness: 340, damping: 34 }}
+            className={`absolute inset-y-0 right-0 w-full sm:w-[440px] flex flex-col pointer-events-auto border-l ${
+              isDark
+                ? "bg-[#141416] text-zinc-100 border-white/[0.08] shadow-2xl"
+                : "bg-[#FBFBFD] text-[#1D1D1F] border-black/[0.08] shadow-2xl"
             }`}
           >
-            {/* Drawer Header */}
+            {/* Header */}
             <div
-              className={`px-5 py-4 border-b flex items-center justify-between ${
-                isNeumorphic
-                  ? "neu-raised border-slate-300"
-                  : isDark
-                  ? "bg-[#27272A] border-b-2 border-[#3F3F46]"
-                  : "bg-[#F4EFE6] border-b-2 border-[#1E1B18]"
+              className={`px-5 py-4 border-b flex items-center justify-between apple-glass ${
+                isDark ? "border-white/[0.08]" : "border-black/[0.06]"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                    isNeumorphic
-                      ? "neu-inset text-indigo-600"
-                      : isDark
-                      ? "bg-amber-400 text-zinc-950 border-2 border-amber-500 shadow-sm"
-                      : "bg-[#FEF08A] text-[#1E1B18] border-2 border-[#1E1B18] shadow-sm"
+                  className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${
+                    isDark
+                      ? "bg-[#2997FF]/15 text-[#2997FF]"
+                      : "bg-[#0071E3]/10 text-[#0071E3]"
                   }`}
                 >
-                  <Bot className="w-5 h-5 stroke-[2.5]" />
+                  <Bot className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-black uppercase tracking-tight">Neuro AI</h3>
+                    <h3 className="font-display text-sm font-semibold tracking-tight">
+                      NeuroBot
+                    </h3>
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-black uppercase ${
-                        isNeumorphic
-                          ? "neu-inset text-indigo-600"
-                          : isDark
-                          ? "bg-amber-400/10 text-amber-400 border border-amber-400/20"
-                          : "bg-[#EEF2FF] text-[#4F46E5] border border-[#1E1B18]"
+                      className={`text-[11px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
+                        isDark
+                          ? "bg-white/[0.08] text-zinc-300"
+                          : "bg-black/[0.05] text-[#6E6E73]"
                       }`}
                     >
-                      Tutor
+                      Gemini Tutor
                     </span>
                   </div>
-                  <p className={`text-[11px] truncate max-w-[240px] font-mono ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                    {activeQuestTitle} • {activePhase}
+                  <p
+                    className={`text-xs truncate max-w-[230px] ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                    }`}
+                  >
+                    {activeQuestTitle} · {activePhase}
                   </p>
                 </div>
               </div>
 
-              <motion.button
-                id="close-tutor-btn"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={onClose}
-                className={`p-1.5 rounded-xl transition-colors ${
-                  isNeumorphic
-                    ? "neu-btn text-slate-600 hover:text-slate-950"
-                    : isDark
-                    ? "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-700"
-                    : "text-[#1E1B18] hover:bg-zinc-200 border border-[#1E1B18]"
-                }`}
-              >
-                <X className="w-4 h-4 stroke-[2.5]" />
-              </motion.button>
-            </div>
-
-            {/* Difficulty Tier Selector */}
-            <div
-              className={`px-4 py-2.5 flex items-center justify-between text-xs ${
-                isNeumorphic
-                  ? "neu-flat border-b border-slate-300/70"
-                  : isDark
-                  ? "bg-[#1F1F23] border-b-2 border-[#3F3F46]"
-                  : "bg-[#FFFDF9] border-b-2 border-[#1E1B18]"
-              }`}
-            >
-              <span className={`font-mono text-xs font-bold flex items-center gap-1.5 ${isNeumorphic ? "text-slate-600" : isDark ? "text-zinc-400" : "text-zinc-700"}`}>
-                <GraduationCap className={`w-3.5 h-3.5 ${isNeumorphic ? "text-indigo-600" : isDark ? "text-amber-400" : "text-[#4F46E5]"}`} />
-                <span>Depth:</span>
-              </span>
-              <div className={`flex rounded-xl p-0.5 ${isNeumorphic ? "neu-inset" : isDark ? "bg-zinc-900 border-2 border-zinc-700" : "bg-white border-2 border-[#1E1B18]"}`}>
-                {(["beginner", "intermediate", "advanced"] as TutorDifficulty[]).map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => setDifficulty(level)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-black uppercase transition-colors ${
-                      difficulty === level
-                        ? isNeumorphic
-                          ? "neu-btn-primary text-white font-bold"
-                          : isDark
-                          ? "bg-amber-400 text-zinc-950 font-bold"
-                          : "bg-[#1E1B18] text-white font-bold shadow-sm"
-                        : isNeumorphic
-                        ? "text-slate-600 hover:text-slate-900"
-                        : isDark
-                        ? "text-zinc-400 hover:text-zinc-200"
-                        : "text-zinc-600 hover:text-zinc-950"
-                    }`}
-                  >
-                    {level === "beginner" ? "Simple" : level === "intermediate" ? "Standard" : "Formal"}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <motion.button
+                  id="reset-tutor-chat-btn"
+                  whileTap={{ scale: 0.94 }}
+                  type="button"
+                  onClick={handleResetChat}
+                  title="New conversation"
+                  aria-label="Reset conversation"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                    isDark
+                      ? "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      : "text-[#6E6E73] hover:text-[#1D1D1F] hover:bg-black/[0.05]"
+                  }`}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </motion.button>
+                <motion.button
+                  id="close-tutor-btn"
+                  whileTap={{ scale: 0.94 }}
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close tutor drawer"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                    isDark
+                      ? "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.08]"
+                      : "text-[#6E6E73] hover:text-[#1D1D1F] hover:bg-black/[0.05]"
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </motion.button>
               </div>
             </div>
 
-            {/* Socratic Quick Prompts */}
+            {/* Depth Segmented Control */}
             <div
-              className={`px-4 py-2.5 overflow-x-auto flex items-center gap-2 no-scrollbar ${
-                isNeumorphic
-                  ? "neu-flat border-b border-slate-300/70"
-                  : isDark ? "bg-[#18181B] border-b-2 border-[#3F3F46]" : "bg-[#FFFDF9] border-b-2 border-[#1E1B18]"
+              className={`px-5 py-2.5 flex items-center justify-between border-b ${
+                isDark
+                  ? "bg-[#1C1C1E]/60 border-white/[0.06]"
+                  : "bg-white/70 border-black/[0.05]"
               }`}
             >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <span
+                className={`text-xs font-medium flex items-center gap-1.5 ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
+                <GraduationCap className="w-3.5 h-3.5 text-[#0071E3] dark:text-[#2997FF]" />
+                <span>Explanation Depth</span>
+              </span>
+
+              <div
+                className={`flex rounded-full p-0.5 border ${
+                  isDark
+                    ? "bg-[#141416] border-white/[0.08]"
+                    : "bg-black/[0.05] border-black/[0.04]"
+                }`}
+              >
+                {(["beginner", "intermediate", "advanced"] as TutorDifficulty[]).map((level) => {
+                  const active = difficulty === level;
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setDifficulty(level)}
+                      className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all whitespace-nowrap ${
+                        active
+                          ? isDark
+                            ? "bg-[#2C2C2E] text-white shadow-xs"
+                            : "bg-white text-[#1D1D1F] shadow-xs"
+                          : isDark
+                          ? "text-zinc-400 hover:text-zinc-200"
+                          : "text-[#6E6E73] hover:text-[#1D1D1F]"
+                      }`}
+                    >
+                      {level === "beginner"
+                        ? "Simple"
+                        : level === "intermediate"
+                        ? "Standard"
+                        : "Formal"}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quick Prompts Strip */}
+            <div
+              className={`px-5 py-2.5 overflow-x-auto flex items-center gap-2 no-scrollbar border-b ${
+                isDark ? "border-white/[0.06]" : "border-black/[0.05]"
+              }`}
+            >
+              <button
                 type="button"
                 onClick={() => handleQuickPill("Explain simply", "explain")}
-                className={`shrink-0 px-2.5 py-1 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-transform ${
-                  isNeumorphic
-                    ? "neu-btn text-slate-700 hover:text-slate-950"
-                    : isDark
-                    ? "bg-[#27272A] border-2 border-[#3F3F46] text-zinc-300 hover:border-amber-400 hover:text-amber-300"
-                    : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-100 shadow-[1px_1px_0px_#1E1B18]"
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors border whitespace-nowrap ${
+                  isDark
+                    ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-200 hover:bg-[#2C2C2E]"
+                    : "bg-white border-black/[0.08] text-[#1D1D1F] hover:bg-[#F2F2F7]"
                 }`}
               >
-                <Lightbulb className="w-3 h-3 text-amber-500" />
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
                 <span>Explain simply</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              </button>
+
+              <button
                 type="button"
                 onClick={() => handleQuickPill("Give a hint", "hint")}
-                className={`shrink-0 px-2.5 py-1 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-transform ${
-                  isNeumorphic
-                    ? "neu-btn text-slate-700 hover:text-slate-950"
-                    : isDark
-                    ? "bg-[#27272A] border-2 border-[#3F3F46] text-zinc-300 hover:border-amber-400 hover:text-amber-300"
-                    : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-100 shadow-[1px_1px_0px_#1E1B18]"
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors border whitespace-nowrap ${
+                  isDark
+                    ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-200 hover:bg-[#2C2C2E]"
+                    : "bg-white border-black/[0.08] text-[#1D1D1F] hover:bg-[#F2F2F7]"
                 }`}
               >
-                <HelpCircle className="w-3 h-3 text-amber-500" />
+                <HelpCircle className="w-3.5 h-3.5 text-[#0071E3] dark:text-[#2997FF]" />
                 <span>Socratic hint</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              </button>
+
+              <button
                 type="button"
                 onClick={() => handleQuickPill("Common misconceptions", "misconceptions")}
-                className={`shrink-0 px-2.5 py-1 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-transform ${
-                  isNeumorphic
-                    ? "neu-btn text-slate-700 hover:text-slate-950"
-                    : isDark
-                    ? "bg-[#27272A] border-2 border-[#3F3F46] text-zinc-300 hover:border-amber-400 hover:text-amber-300"
-                    : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-100 shadow-[1px_1px_0px_#1E1B18]"
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors border whitespace-nowrap ${
+                  isDark
+                    ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-200 hover:bg-[#2C2C2E]"
+                    : "bg-white border-black/[0.08] text-[#1D1D1F] hover:bg-[#F2F2F7]"
                 }`}
               >
-                <AlertTriangle className="w-3 h-3 text-rose-500" />
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
                 <span>Misconceptions</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              </button>
+
+              <button
                 type="button"
                 onClick={() => handleQuickPill("Practice drill", "practice")}
-                className={`shrink-0 px-2.5 py-1 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-transform ${
-                  isNeumorphic
-                    ? "neu-btn text-slate-700 hover:text-slate-950"
-                    : isDark
-                    ? "bg-[#27272A] border-2 border-[#3F3F46] text-zinc-300 hover:border-amber-400 hover:text-amber-300"
-                    : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-100 shadow-[1px_1px_0px_#1E1B18]"
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors border whitespace-nowrap ${
+                  isDark
+                    ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-200 hover:bg-[#2C2C2E]"
+                    : "bg-white border-black/[0.08] text-[#1D1D1F] hover:bg-[#F2F2F7]"
                 }`}
               >
-                <Sparkles className="w-3 h-3 text-emerald-500" />
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Practice drill</span>
-              </motion.button>
+              </button>
             </div>
 
             {/* Messages Feed */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
               {messages.map((msg) => {
                 const isAI = msg.sender === "neuro-ai";
                 return (
                   <motion.div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-3 ${isAI ? "items-start" : "items-end justify-end"}`}
+                    transition={{ duration: 0.22 }}
+                    className={`flex gap-2.5 ${isAI ? "items-start" : "items-end justify-end"}`}
                   >
                     {isAI && (
                       <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                          isNeumorphic
-                            ? "neu-inset text-indigo-600"
-                            : isDark
-                            ? "bg-amber-400/15 text-amber-400 border-2 border-amber-400/30"
-                            : "bg-[#FEF08A] text-[#1E1B18] border-2 border-[#1E1B18]"
+                        className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                          isDark
+                            ? "bg-[#2997FF]/15 text-[#2997FF]"
+                            : "bg-[#0071E3]/10 text-[#0071E3]"
                         }`}
                       >
-                        <Bot className="w-4 h-4 stroke-[2.5]" />
+                        <Bot className="w-4 h-4" />
                       </div>
                     )}
                     <div
-                      className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                      className={`max-w-[82%] rounded-2xl px-4 py-3 text-[13px] leading-relaxed ${
                         isAI
-                          ? isNeumorphic
-                            ? "neu-raised text-slate-800"
-                            : isDark
-                            ? "bg-[#27272A] border-2 border-[#3F3F46] text-zinc-100"
-                            : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                          : isNeumorphic
-                          ? "neu-btn-primary text-white font-bold"
-                          : isDark
-                          ? "bg-amber-400 border-2 border-amber-500 text-zinc-950 font-bold"
-                          : "bg-[#1E1B18] border-2 border-[#1E1B18] text-white font-bold shadow-[2px_2px_0px_#1E1B18]"
+                          ? isDark
+                            ? "bg-[#1C1C1E] border border-white/[0.08] text-zinc-100"
+                            : "bg-white border border-black/[0.06] text-[#1D1D1F] shadow-xs"
+                          : "bg-[#0071E3] text-white shadow-xs"
                       }`}
                     >
-                      <div className="whitespace-pre-wrap space-y-2">{msg.text}</div>
+                      <div className="whitespace-pre-wrap">{msg.text}</div>
                       <div
-                        className={`text-[10px] mt-1.5 font-mono flex items-center gap-2 ${
+                        className={`text-[10px] mt-1.5 font-mono tabular-nums flex items-center gap-1.5 ${
                           isAI
-                            ? isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-500" : "text-zinc-500"
-                            : isNeumorphic ? "text-indigo-200" : isDark ? "text-zinc-900" : "text-zinc-400"
+                            ? isDark
+                              ? "text-zinc-500"
+                              : "text-[#86868B]"
+                            : "text-white/75"
                         }`}
                       >
                         <span>{msg.timestamp}</span>
                         {msg.source && (
-                          <span className="opacity-75">
-                            • Pedagogy Engine
+                          <span>
+                            · {msg.source === "gemini" ? "Gemini AI" : "Pedagogy Engine"}
                           </span>
                         )}
                       </div>
@@ -368,21 +389,41 @@ export const NeuroTutorDrawer: React.FC<NeuroTutorDrawerProps> = ({
                 );
               })}
 
+              {errorBanner && (
+                <div
+                  role="alert"
+                  className={`p-3.5 rounded-2xl border text-xs flex items-start gap-2.5 ${
+                    isDark
+                      ? "bg-rose-500/10 border-rose-500/25 text-rose-300"
+                      : "bg-rose-50 border-rose-200 text-rose-700"
+                  }`}
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{errorBanner}</span>
+                </div>
+              )}
+
               {isLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex gap-3 items-center"
+                  className="flex gap-2.5 items-center"
                 >
                   <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                      isDark ? "bg-amber-400/20 text-amber-400" : "bg-[#FEF08A] text-[#1E1B18]"
+                    className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                      isDark ? "bg-[#2997FF]/15 text-[#2997FF]" : "bg-[#0071E3]/10 text-[#0071E3]"
                     }`}
                   >
-                    <Bot className="w-4 h-4 animate-spin" />
+                    <Bot className="w-4 h-4" />
                   </div>
-                  <div className={`text-xs font-mono ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                    Neuro AI is reasoning socratic guidance...
+                  <div
+                    className={`px-3.5 py-2 rounded-2xl text-xs ${
+                      isDark
+                        ? "bg-[#1C1C1E] text-zinc-400 border border-white/[0.06]"
+                        : "bg-white text-[#6E6E73] border border-black/[0.06]"
+                    }`}
+                  >
+                    NeuroBot is thinking...
                   </div>
                 </motion.div>
               )}
@@ -391,12 +432,8 @@ export const NeuroTutorDrawer: React.FC<NeuroTutorDrawerProps> = ({
 
             {/* Input Composer */}
             <div
-              className={`p-3.5 ${
-                isNeumorphic
-                  ? "neu-flat border-t border-slate-300/70"
-                  : isDark
-                  ? "bg-[#27272A] border-t-2 border-[#3F3F46]"
-                  : "bg-[#F4EFE6] border-t-2 border-[#1E1B18]"
+              className={`p-4 border-t apple-glass ${
+                isDark ? "border-white/[0.08]" : "border-black/[0.06]"
               }`}
             >
               <form
@@ -411,30 +448,22 @@ export const NeuroTutorDrawer: React.FC<NeuroTutorDrawerProps> = ({
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={`Ask Neuro AI about ${activeQuestTitle}...`}
-                  className={`flex-1 rounded-xl px-3.5 py-2.5 text-xs font-mono transition-colors focus:outline-none ${
-                    isNeumorphic
-                      ? "neu-inset text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/40"
-                      : isDark
-                      ? "bg-[#18181B] border-2 border-[#3F3F46] text-zinc-100 placeholder-zinc-500 focus:border-amber-400"
-                      : "bg-white border-2 border-[#1E1B18] text-[#1E1B18] placeholder-zinc-500 focus:border-[#4F46E5] shadow-[2px_2px_0px_#1E1B18]"
+                  placeholder={`Ask about ${activeQuestTitle}...`}
+                  className={`flex-1 rounded-full px-4 py-2.5 text-[13px] transition-colors focus:outline-none border ${
+                    isDark
+                      ? "bg-[#1C1C1E] border-white/[0.08] text-zinc-100 placeholder-zinc-500 focus:border-[#2997FF]"
+                      : "bg-white border-black/[0.08] text-[#1D1D1F] placeholder-[#86868B] focus:border-[#0071E3]"
                   }`}
                 />
                 <motion.button
                   id="send-tutor-msg-btn"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.94 }}
                   type="submit"
                   disabled={!inputText.trim() || isLoading}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform shrink-0 font-black disabled:opacity-40 ${
-                    isNeumorphic
-                      ? "neu-btn-primary text-white"
-                      : isDark
-                      ? "bg-amber-400 border-2 border-amber-500 text-zinc-950 hover:bg-amber-300"
-                      : "bg-[#1E1B18] border-2 border-[#1E1B18] text-white hover:bg-black shadow-[2px_2px_0px_#1E1B18]"
-                  }`}
+                  aria-label="Send message"
+                  className="w-10 h-10 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white flex items-center justify-center transition-colors shrink-0 disabled:opacity-35 disabled:cursor-not-allowed shadow-xs"
                 >
-                  <Send className="w-4 h-4 stroke-[2.5]" />
+                  <Send className="w-4 h-4" />
                 </motion.button>
               </form>
             </div>

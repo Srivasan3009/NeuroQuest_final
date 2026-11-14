@@ -6,18 +6,13 @@ import {
   BookOpen,
   Award,
   CheckCircle2,
-  HelpCircle,
   Sparkles,
   Bot,
   Zap,
-  Flame,
-  Star,
   Swords,
-  Check,
-  X,
   Lightbulb,
   Sun,
-  Moon
+  Moon,
 } from "lucide-react";
 import { Quest, QuestPhase, Stage, AppTheme } from "../../types";
 import { triggerCelebrationConfetti } from "../../utils/confetti";
@@ -27,7 +22,11 @@ interface QuestViewProps {
   quest: Quest;
   stage: Stage;
   onBackToJourney: () => void;
-  onCompleteQuest: (questId: string, xpReward: number, skillTag: string) => void;
+  onCompleteQuest: (
+    questId: string,
+    xpReward: number,
+    skillTag: string
+  ) => void;
   onOpenTutor: (questTitle: string, phase: string) => void;
   onNavigateNextQuest?: (nextQuestId: string) => void;
   onToggleTheme?: () => void;
@@ -35,19 +34,18 @@ interface QuestViewProps {
 }
 
 const CHEERFUL_PRAISES = [
-  "Nailed it! 🚀",
-  "You're on fire! 🔥",
-  "Genius brain move! 💡",
-  "Flawless reasoning! ✨",
-  "Supercharged intelligence! ⚡",
-  "Absolute mastery! 🌟"
+  "Well reasoned.",
+  "Spot on.",
+  "Great intuition.",
+  "Clear mastery.",
+  "Exact insight.",
 ];
 
 const MASCOT_TIPS = [
-  "NeuroBot says: 'Real-world machine learning is all about recognizing patterns rather than memorizing rules!'",
-  "NeuroBot says: 'You've got this! Think about the real-world analogy.'",
-  "NeuroBot says: 'High-dimensional space sounds scary, but it's just fancy coordinates!'",
-  "NeuroBot says: 'Every AI engineer started right where you are today!'"
+  "NeuroBot: Real-world machine learning is about recognizing patterns rather than memorizing rules.",
+  "NeuroBot: Think about the everyday analogy when evaluating edge cases.",
+  "NeuroBot: High-dimensional embeddings are simply coordinates for meaning.",
+  "NeuroBot: Every breakthrough architecture starts from clear fundamentals.",
 ];
 
 const PHASE_ORDER: Record<QuestPhase, number> = {
@@ -57,63 +55,28 @@ const PHASE_ORDER: Record<QuestPhase, number> = {
   reward: 3,
 };
 
-const containerVariants = {
-  hidden: { opacity: 0, y: 24, scale: 0.98 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.35,
-      ease: [0.16, 1, 0.3, 1],
-      staggerChildren: 0.07,
-      delayChildren: 0.05,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -20,
-    scale: 0.98,
-    transition: {
-      duration: 0.22,
-      ease: "easeInOut",
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 350, damping: 25 },
-  },
-};
-
 const phaseSlideVariants = {
   initial: (direction: number) => ({
     opacity: 0,
-    x: direction > 0 ? 36 : -36,
-    scale: 0.98,
+    x: direction > 0 ? 16 : -16,
+    scale: 0.992,
   }),
   animate: {
     opacity: 1,
     x: 0,
     scale: 1,
     transition: {
-      type: "spring",
-      stiffness: 340,
-      damping: 26,
-      mass: 0.75,
+      duration: 0.32,
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   },
   exit: (direction: number) => ({
     opacity: 0,
-    x: direction > 0 ? -36 : 36,
-    scale: 0.98,
+    x: direction > 0 ? -16 : 16,
+    scale: 0.995,
     transition: {
       duration: 0.18,
-      ease: "easeInOut",
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   }),
 };
@@ -121,26 +84,25 @@ const phaseSlideVariants = {
 const cardSlideVariants = {
   initial: (direction: number) => ({
     opacity: 0,
-    x: direction > 0 ? 30 : -30,
-    scale: 0.98,
+    x: direction > 0 ? 14 : -14,
+    scale: 0.992,
   }),
   animate: {
     opacity: 1,
     x: 0,
     scale: 1,
     transition: {
-      type: "spring",
-      stiffness: 350,
-      damping: 26,
+      duration: 0.28,
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   },
   exit: (direction: number) => ({
     opacity: 0,
-    x: direction > 0 ? -30 : 30,
-    scale: 0.98,
+    x: direction > 0 ? -14 : 14,
+    scale: 0.995,
     transition: {
       duration: 0.16,
-      ease: "easeInOut",
+      ease: [0.22, 1, 0.36, 1] as const,
     },
   }),
 };
@@ -153,9 +115,8 @@ export const QuestView: React.FC<QuestViewProps> = ({
   onOpenTutor,
   onNavigateNextQuest,
   onToggleTheme,
-  theme = "neumorphic"
+  theme = "neumorphic",
 }) => {
-  const isNeumorphic = theme === "neumorphic";
   const isDark =
     theme === "obsidian-gold" ||
     theme === "obsidian-noir" ||
@@ -165,17 +126,18 @@ export const QuestView: React.FC<QuestViewProps> = ({
   const [phase, setPhase] = useState<QuestPhase>("learn");
   const [phaseDirection, setPhaseDirection] = useState(1);
 
-  // Step 1: Learn Card Navigation
   const [activeQACardIdx, setActiveQACardIdx] = useState(0);
   const [cardDirection, setCardDirection] = useState(1);
 
-  // Step 2: Gamified Concept Check State
-  const [selectedConceptOption, setSelectedConceptOption] = useState<string | null>(null);
+  const [selectedConceptOption, setSelectedConceptOption] = useState<
+    string | null
+  >(null);
   const [conceptSubmitted, setConceptSubmitted] = useState(false);
   const [conceptPraise, setConceptPraise] = useState(CHEERFUL_PRAISES[0]);
 
-  // Step 3: Boss Challenge State
-  const [selectedBossOption, setSelectedBossOption] = useState<string | null>(null);
+  const [selectedBossOption, setSelectedBossOption] = useState<string | null>(
+    null
+  );
   const [bossSubmitted, setBossSubmitted] = useState(false);
   const [bossPraise, setBossPraise] = useState(CHEERFUL_PRAISES[1]);
 
@@ -184,26 +146,29 @@ export const QuestView: React.FC<QuestViewProps> = ({
       badgeEmoji: "💡",
       question: quest.learn.title,
       answer: quest.learn.summary,
-      analogy: quest.learn.proTip
-    }
+      analogy: quest.learn.proTip,
+    },
   ];
 
   const conceptCheckData = quest.conceptCheck || {
     prompt: quest.prove?.question || "What is the core takeaway of this lesson?",
-    contextPill: "Step 2: Rapid Concept Check",
+    contextPill: "Concept Check",
     options: quest.prove?.options || [],
-    encouragement: "Fantastic instinct! You've grasped the fundamental concept."
+    encouragement: "You grasped the core principle.",
   };
 
   const bossChallengeData = quest.bossChallenge || {
-    title: `Boss Challenge: ${quest.title}`,
-    scenario: quest.prove?.scenario || "A real-world engineering challenge puts your AI knowledge to the test.",
+    title: `Scenario Challenge: ${quest.title}`,
+    scenario:
+      quest.prove?.scenario ||
+      "A real-world engineering challenge puts your AI knowledge to the test.",
     question: quest.prove?.question || "How do you solve this scenario?",
     options: quest.prove?.options || [],
     bossAvatar: "🤖",
-    bossQuote: "'Let's see if you truly mastered this concept!'",
-    victoryMessage: "BOSS DEFEATED! 🏆 You proved your conceptual mastery under real-world pressure!",
-    deepDiveExplanation: quest.prove?.deepDiveExplanation || "Great job completing this quest!"
+    bossQuote: "",
+    victoryMessage: "Challenge solved with strong engineering judgment.",
+    deepDiveExplanation:
+      quest.prove?.deepDiveExplanation || "Great job completing this quest!",
   };
 
   const handleSwitchPhase = (newPhase: QuestPhase) => {
@@ -230,11 +195,14 @@ export const QuestView: React.FC<QuestViewProps> = ({
   const handleConceptSubmit = () => {
     if (!selectedConceptOption) return;
     setConceptSubmitted(true);
-    const chosen = conceptCheckData.options.find((o) => o.id === selectedConceptOption);
+    const chosen = conceptCheckData.options.find(
+      (o) => o.id === selectedConceptOption
+    );
     if (chosen?.isCorrect) {
       soundFx.playCorrect();
       triggerCelebrationConfetti();
-      const randomPraise = CHEERFUL_PRAISES[Math.floor(Math.random() * CHEERFUL_PRAISES.length)];
+      const randomPraise =
+        CHEERFUL_PRAISES[Math.floor(Math.random() * CHEERFUL_PRAISES.length)];
       setConceptPraise(randomPraise);
     } else {
       soundFx.playWrong();
@@ -244,1064 +212,888 @@ export const QuestView: React.FC<QuestViewProps> = ({
   const handleBossSubmit = () => {
     if (!selectedBossOption) return;
     setBossSubmitted(true);
-    const chosen = bossChallengeData.options.find((o) => o.id === selectedBossOption);
+    const chosen = bossChallengeData.options.find(
+      (o) => o.id === selectedBossOption
+    );
     if (chosen?.isCorrect) {
       soundFx.playCorrect();
       triggerCelebrationConfetti();
-      const randomPraise = CHEERFUL_PRAISES[Math.floor(Math.random() * CHEERFUL_PRAISES.length)];
+      const randomPraise =
+        CHEERFUL_PRAISES[Math.floor(Math.random() * CHEERFUL_PRAISES.length)];
       setBossPraise(randomPraise);
     } else {
       soundFx.playWrong();
     }
   };
 
-  const phasesList: { id: QuestPhase; label: string; icon: any; stepNumber: string }[] = [
-    { id: "learn", label: "Learn & Discover", icon: BookOpen, stepNumber: "Step 1" },
-    { id: "concept-check", label: "Concept Check", icon: Zap, stepNumber: "Step 2" },
-    { id: "boss-challenge", label: "Boss Challenge", icon: Swords, stepNumber: "Step 3" },
-    { id: "reward", label: "Victory Reward", icon: Award, stepNumber: "Step 4" }
+  const phasesList: {
+    id: QuestPhase;
+    label: string;
+    shortLabel: string;
+    icon: typeof BookOpen;
+  }[] = [
+    { id: "learn", label: "Learn", shortLabel: "Learn", icon: BookOpen },
+    {
+      id: "concept-check",
+      label: "Concept Check",
+      shortLabel: "Check",
+      icon: Zap,
+    },
+    {
+      id: "boss-challenge",
+      label: "Scenario",
+      shortLabel: "Challenge",
+      icon: Swords,
+    },
+    { id: "reward", label: "Complete", shortLabel: "Reward", icon: Award },
   ];
 
   const currentQACard = qaCards[activeQACardIdx] || qaCards[0];
-  const conceptChosenOpt = conceptCheckData.options.find((o) => o.id === selectedConceptOption);
+  const conceptChosenOpt = conceptCheckData.options.find(
+    (o) => o.id === selectedConceptOption
+  );
   const isConceptCorrect = conceptChosenOpt?.isCorrect ?? false;
 
-  const bossChosenOpt = bossChallengeData.options.find((o) => o.id === selectedBossOption);
+  const bossChosenOpt = bossChallengeData.options.find(
+    (o) => o.id === selectedBossOption
+  );
   const isBossCorrect = bossChosenOpt?.isCorrect ?? false;
 
   return (
     <motion.div
       id="quest-view-container"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-20 space-y-6"
     >
-      {/* Top Header Bar */}
-      <motion.div
-        variants={itemVariants}
-        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${
-          isDark ? "border-[#27272A]" : "border-[#1E1B18]"
+      {/* Frosted Glass Upper Dash */}
+      <div
+        className={`apple-glass-dock rounded-3xl px-4 py-3.5 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 ${
+          isDark ? "text-[#F5F5F7]" : "text-[#1D1D1F]"
         }`}
       >
-        <div className="flex items-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.04, x: -2 }}
-            whileTap={{ scale: 0.95 }}
+        <div className="flex items-center gap-3.5 min-w-0">
+          <button
             id="back-to-journey-btn"
             onClick={onBackToJourney}
-            className={`p-2.5 rounded-xl border-2 transition-colors flex items-center gap-2 text-xs font-mono font-black uppercase ${
-              isDark
-                ? "bg-[#27272A] border-[#3F3F46] text-zinc-300 hover:text-zinc-100"
-                : "bg-white border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-100 shadow-[2px_2px_0px_#1E1B18]"
+            className={`min-h-[40px] px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap apple-glass-pill ${
+              isDark ? "text-zinc-100" : "text-[#1D1D1F]"
             }`}
           >
-            <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
-            <span>Journey Path</span>
-          </motion.button>
-          <div>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back</span>
+          </button>
+          <div className="min-w-0">
             <div
-              className={`text-[10px] font-mono font-black tracking-widest uppercase ${
-                isDark ? "text-amber-400" : "text-[#4F46E5]"
+              className={`text-xs font-medium ${
+                isDark ? "text-[#2997FF]" : "text-[#0071E3]"
               }`}
             >
-              Stage {stage.number}: {stage.title}
+              Stage {stage.number} · {stage.title}
             </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight uppercase">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight truncate">
               {quest.title}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           {onToggleTheme && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               id="btn-quest-theme-toggle"
               onClick={() => {
                 soundFx.playTap();
                 onToggleTheme();
               }}
-              className={`flex items-center p-1 rounded-xl transition-all ${
-                isNeumorphic
-                  ? "neu-inset border border-slate-300/60"
-                  : isDark
-                  ? "bg-[#202023] border border-[#3F3F46] hover:border-amber-400/50"
-                  : "bg-[#F3EFE6] border-2 border-[#1E1B18] shadow-[1.5px_1.5px_0px_#1E1B18]"
-              }`}
+              className="min-h-[38px] flex items-center p-0.5 rounded-full apple-glass-pill"
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               <span
-                className={`p-1.5 rounded-lg transition-all ${
+                className={`p-1.5 rounded-full ${
                   !isDark
-                    ? isNeumorphic
-                      ? "neu-raised text-amber-500 shadow-sm"
-                      : "bg-[#FEF08A] text-[#1E1B18] font-black border border-[#1E1B18]"
-                    : "text-zinc-500 hover:text-zinc-300 opacity-60"
+                    ? "bg-white/90 text-amber-500 shadow-xs"
+                    : "text-zinc-500"
                 }`}
               >
-                <Sun className={`w-3.5 h-3.5 stroke-[2.5] ${!isDark ? "fill-amber-400/40 text-amber-500" : ""}`} />
+                <Sun className="w-3.5 h-3.5" />
               </span>
               <span
-                className={`p-1.5 rounded-lg transition-all ${
+                className={`p-1.5 rounded-full ${
                   isDark
-                    ? "bg-amber-400/20 text-amber-300 font-black border border-amber-400/40 shadow-[0_0_8px_rgba(251,191,36,0.3)]"
-                    : isNeumorphic
-                    ? "text-slate-400 hover:text-slate-600 opacity-60"
-                    : "text-zinc-500 hover:text-zinc-700 opacity-60"
+                    ? "bg-white/[0.16] text-amber-300 shadow-xs"
+                    : "text-zinc-400"
                 }`}
               >
-                <Moon className={`w-3.5 h-3.5 stroke-[2.5] ${isDark ? "fill-amber-400/30 text-amber-400" : ""}`} />
+                <Moon className="w-3.5 h-3.5" />
               </span>
-            </motion.button>
+            </button>
           )}
 
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             id="open-neuro-tutor-btn"
             onClick={() => onOpenTutor(quest.title, phase)}
-            className={`px-3.5 py-2 rounded-xl border-2 text-xs font-mono font-black uppercase flex items-center gap-2 transition-colors ${
-              isDark
-                ? "bg-amber-400/10 border-amber-400 text-amber-300 hover:bg-amber-400/20"
-                : "bg-[#FEF08A] border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
+            className={`min-h-[38px] px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap apple-glass-pill ${
+              isDark ? "text-[#2997FF]" : "text-[#0071E3]"
             }`}
           >
-            <Bot className="w-4 h-4 stroke-[2.5]" />
+            <Bot className="w-3.5 h-3.5" />
             <span>Ask NeuroBot</span>
-          </motion.button>
+          </button>
 
           <div
-            className={`px-3 py-2 rounded-xl border-2 text-xs font-mono font-black flex items-center gap-1.5 ${
-              isDark
-                ? "bg-[#27272A] border-[#3F3F46] text-amber-300"
-                : "bg-[#FFE4E6] border-[#1E1B18] text-[#E11D48] shadow-[2px_2px_0px_#1E1B18]"
+            className={`min-h-[38px] px-3 py-1.5 rounded-full text-xs font-mono font-semibold tabular-nums flex items-center gap-1.5 whitespace-nowrap apple-glass-pill ${
+              isDark ? "text-amber-300" : "text-[#1D1D1F]"
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>+{quest.xpReward} XP</span>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-        {/* Gamified 4-Step Journey Stepper */}
-        <motion.div
-          variants={itemVariants}
-          className={`grid grid-cols-4 gap-2 p-2 rounded-2xl transition-all ${
-            isNeumorphic
-              ? "neu-flat"
-              : isDark
-              ? "bg-[#27272A]/80 border-2 border-[#3F3F46]"
-              : "bg-white border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-          }`}
-        >
-          {phasesList.map((p) => {
-            const Icon = p.icon;
-            const isActive = phase === p.id;
-            return (
-              <motion.button
-                key={p.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => {
-                  soundFx.playTap();
-                  handleSwitchPhase(p.id);
-                }}
-                className={`py-2.5 px-2 rounded-xl text-xs font-mono font-black flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all ${
-                  isActive
-                    ? isNeumorphic
-                      ? "neu-btn-primary text-white shadow-md"
-                      : isDark
-                      ? "bg-amber-400 text-zinc-950 border border-amber-500 shadow-md"
-                      : "bg-[#1E1B18] text-white border border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                    : isNeumorphic
-                    ? "neu-inset text-slate-500 hover:text-slate-900"
-                    : isDark
-                    ? "border border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-                    : "border border-transparent text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-                }`}
-              >
-                <Icon className="w-4 h-4 stroke-[2.5]" />
-                <div className="text-center sm:text-left">
-                  <span className="block text-[9px] uppercase tracking-wider opacity-75">
-                    {p.stepNumber}
-                  </span>
-                  <span className="hidden sm:inline">{p.label}</span>
-                </div>
-              </motion.button>
-            );
-          })}
-        </motion.div>
-
-        {/* Cheerful Mascot Coach Banner */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-3.5 rounded-2xl flex items-center gap-3 text-xs transition-all ${
-            isNeumorphic
-              ? "neu-raised text-slate-800"
-              : isDark
-              ? "bg-[#18181B] border-2 border-amber-400/30 text-amber-300"
-              : "bg-[#FEF9C3] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-          }`}
-        >
-          <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${
-              isNeumorphic ? "neu-inset" : "bg-white border-2 border-current shadow-sm"
-            }`}
-          >
-            🤖
-          </div>
-          <div className="flex-1 font-bold">
-            {MASCOT_TIPS[Math.abs(quest.title.length) % MASCOT_TIPS.length]}
-          </div>
-          <div
-            className={`hidden sm:flex items-center gap-1 text-[11px] font-mono font-black px-2.5 py-1 rounded-lg uppercase ${
-              isNeumorphic ? "neu-inset text-amber-600" : "bg-black/5 dark:bg-white/10"
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-500 fill-current" />
-            <span>Curious Mode</span>
-          </div>
-        </motion.div>
-
-        {/* Phase Body Animated Container */}
-        <div className="relative overflow-hidden pt-1">
-          <AnimatePresence mode="wait" custom={phaseDirection}>
-            {/* ========================================================= */}
-            {/* STEP 1: BITE-SIZED Q&A CARD JOURNEY */}
-            {/* ========================================================= */}
-            {phase === "learn" && (
-              <motion.div
-                key="phase-learn"
-                custom={phaseDirection}
-                variants={phaseSlideVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                id="quest-phase-learn"
-                className="space-y-6"
-              >
-                {/* Active Card Viewer */}
-                <div
-                  className={`border-2 rounded-3xl p-6 sm:p-8 space-y-6 relative transition-all ${
+      {/* Frosted Glass Segmented 4-Step Phase Stepper */}
+      <div className="grid grid-cols-4 gap-1 p-1.5 rounded-full apple-glass-dock">
+        {phasesList.map((p) => {
+          const Icon = p.icon;
+          const isActive = phase === p.id;
+          return (
+            <button
+              key={p.id}
+              onClick={() => {
+                soundFx.playTap();
+                handleSwitchPhase(p.id);
+              }}
+              className={`relative py-2 px-2 rounded-full text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors z-10 whitespace-nowrap ${
+                isActive
+                  ? isDark
+                    ? "text-white"
+                    : "text-[#0071E3]"
+                  : isDark
+                  ? "text-zinc-300/80 hover:text-white"
+                  : "text-[#1D1D1F]/70 hover:text-[#1D1D1F]"
+              }`}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="quest-phase-pill"
+                  transition={{ type: "spring", stiffness: 360, damping: 30, mass: 0.8 }}
+                  className={`absolute inset-0 rounded-full -z-10 ${
                     isDark
-                      ? "bg-[#18181B] border-[#3F3F46] text-zinc-100 shadow-xl"
-                      : "bg-[#FFFDF9] border-[#1E1B18] shadow-[5px_5px_0px_#1E1B18] text-[#1E1B18]"
+                      ? "bg-white/[0.15] border border-white/[0.18] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]"
+                      : "bg-white/80 border border-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,1),0_2px_10px_rgba(0,113,227,0.12)]"
+                  }`}
+                />
+              )}
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">{p.label}</span>
+              <span className="sm:hidden">{p.shortLabel}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Calm Tutor Note Strip */}
+      <div className="apple-surface px-4 py-3 rounded-2xl flex items-center gap-3 text-xs">
+        <div
+          className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+            isDark
+              ? "bg-[#2997FF]/15 text-[#2997FF]"
+              : "bg-[#0071E3]/10 text-[#0071E3]"
+          }`}
+        >
+          <Bot className="w-4 h-4" />
+        </div>
+        <p className={isDark ? "text-zinc-300" : "text-[#424245]"}>
+          {MASCOT_TIPS[Math.abs(quest.title.length) % MASCOT_TIPS.length]}
+        </p>
+      </div>
+
+      {/* Phase Body */}
+      <div className="relative overflow-hidden">
+        <AnimatePresence mode="wait" custom={phaseDirection}>
+          {/* STEP 1: LEARN */}
+          {phase === "learn" && (
+            <motion.div
+              key="phase-learn"
+              custom={phaseDirection}
+              variants={phaseSlideVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              id="quest-phase-learn"
+              className="space-y-6"
+            >
+              <div className="apple-surface rounded-3xl p-6 sm:p-8 space-y-6">
+                <div
+                  className={`flex items-center justify-between pb-4 border-b ${
+                    isDark ? "border-white/[0.08]" : "border-black/[0.06]"
                   }`}
                 >
-                  {/* Card Progress Pills */}
-                  <div className="flex items-center justify-between border-b pb-4 border-zinc-200 dark:border-zinc-800">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{currentQACard.badgeEmoji || "💡"}</span>
-                      <span
-                        className={`text-xs font-mono uppercase tracking-widest font-black ${
-                          isDark ? "text-amber-400" : "text-[#4F46E5]"
-                        }`}
-                      >
-                        Step 1: Bite-Sized Q&A Card {activeQACardIdx + 1} of {qaCards.length}
-                      </span>
-                    </div>
-                    <div className="flex gap-1.5">
-                      {qaCards.map((_, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            soundFx.playTap();
-                            setCardDirection(idx > activeQACardIdx ? 1 : -1);
-                            setActiveQACardIdx(idx);
-                          }}
-                          className={`w-7 h-2 rounded-full transition-all ${
-                            idx === activeQACardIdx
-                              ? isDark
-                                ? "bg-amber-400 w-9"
-                                : "bg-[#4F46E5] w-9"
-                              : isDark
-                              ? "bg-zinc-700"
-                              : "bg-zinc-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Animated Inner Q&A Content */}
-                  <AnimatePresence mode="wait" custom={cardDirection}>
-                    <motion.div
-                      key={`qa-card-${activeQACardIdx}`}
-                      custom={cardDirection}
-                      variants={cardSlideVariants}
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
-                      className="space-y-6"
-                    >
-                      {/* The Big Question */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase bg-amber-400/20 text-amber-500 border border-amber-400/40">
-                            Question
-                          </span>
-                        </div>
-                        <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-                          {currentQACard.question}
-                        </h2>
-                      </div>
-
-                      {/* Plain English Answer */}
-                      <div
-                        className={`p-5 rounded-2xl border-2 space-y-2 ${
-                          isDark
-                            ? "bg-[#27272A] border-[#3F3F46] text-zinc-100"
-                            : "bg-white border-[#1E1B18] text-zinc-900 shadow-[2px_2px_0px_#1E1B18]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5 text-xs font-mono font-black uppercase text-emerald-600 dark:text-emerald-400">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>The Core Concept</span>
-                        </div>
-                        <p className="text-sm sm:text-base leading-relaxed font-medium">
-                          {currentQACard.answer}
-                        </p>
-                      </div>
-
-                      {/* Real-World Analogy (Ages 15+ Friendly) */}
-                      <div
-                        className={`p-5 rounded-2xl border-2 flex items-start gap-3.5 ${
-                          isDark
-                            ? "bg-amber-950/20 border-amber-400/40 text-amber-200"
-                            : "bg-[#EEF2FF] border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-xl bg-amber-400 text-zinc-950 flex items-center justify-center shrink-0 mt-0.5 font-bold shadow-sm">
-                          <Lightbulb className="w-4 h-4 stroke-[2.5]" />
-                        </div>
-                        <div className="space-y-1 text-xs sm:text-sm">
-                          <span className="font-mono font-black uppercase tracking-wider text-[11px] block">
-                            Real-World Analogy:
-                          </span>
-                          <p className="leading-relaxed font-medium">
-                            {currentQACard.analogy}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-
-                  {/* Card Switcher Buttons */}
-                  <div className="flex items-center justify-between pt-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => {
-                        soundFx.playTap();
-                        setCardDirection(-1);
-                        setActiveQACardIdx((prev) => Math.max(0, prev - 1));
-                      }}
-                      disabled={activeQACardIdx === 0}
-                      className={`px-4 py-2.5 rounded-xl border-2 text-xs font-mono font-black uppercase transition-all disabled:opacity-30 ${
-                        isDark
-                          ? "border-[#3F3F46] text-zinc-400 hover:text-zinc-100 bg-[#27272A]"
-                          : "border-[#1E1B18] text-[#1E1B18] bg-white hover:bg-zinc-100 shadow-[2px_2px_0px_#1E1B18]"
-                      }`}
-                    >
-                      ← Previous Card
-                    </motion.button>
-
-                    {activeQACardIdx < qaCards.length - 1 ? (
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.96 }}
-                        id="next-qa-card-btn"
+                  <span
+                    className={`text-xs font-semibold tabular-nums ${
+                      isDark ? "text-[#2997FF]" : "text-[#0071E3]"
+                    }`}
+                  >
+                    Card {activeQACardIdx + 1} of {qaCards.length}
+                  </span>
+                  <div className="flex gap-1.5">
+                    {qaCards.map((_, idx) => (
+                      <button
+                        key={idx}
                         onClick={() => {
                           soundFx.playTap();
-                          setCardDirection(1);
-                          setActiveQACardIdx((prev) => prev + 1);
+                          setCardDirection(idx > activeQACardIdx ? 1 : -1);
+                          setActiveQACardIdx(idx);
                         }}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
-                          isDark
-                            ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 shadow-md"
-                            : "bg-[#1E1B18] text-white hover:bg-black border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
+                        className={`h-1.5 rounded-full transition-all ${
+                          idx === activeQACardIdx
+                            ? "w-7 bg-[#0071E3] dark:bg-[#2997FF]"
+                            : isDark
+                            ? "w-4 bg-zinc-700"
+                            : "w-4 bg-zinc-200"
                         }`}
-                      >
-                        <span>Next Card ({activeQACardIdx + 2}/{qaCards.length})</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.96 }}
-                        id="proceed-to-concept-check-btn"
-                        onClick={handleNextPhase}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
-                          isDark
-                            ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-md"
-                            : "bg-[#059669] text-white hover:bg-emerald-700 border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                        }`}
-                      >
-                        <span>Ready for Rapid Quiz! 🚀</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </motion.button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Key Concepts Mini Glossary */}
-                <div
-                  className={`border-2 rounded-2xl p-5 space-y-3 ${
-                    isDark ? "bg-[#18181B] border-[#3F3F46]" : "bg-white border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 text-xs font-mono font-black uppercase text-zinc-500">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Key Terms in this Quest</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {(quest.learn.keyConcepts || []).map((kc, idx) => (
-                      <div
-                        key={idx}
-                        className={`p-3 rounded-xl border ${
-                          isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-50 border-zinc-200"
-                        }`}
-                      >
-                        <div className="text-xs font-black">{kc.term}</div>
-                        <div className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
-                          {kc.definition}
-                        </div>
-                      </div>
+                      />
                     ))}
                   </div>
                 </div>
-              </motion.div>
-            )}
 
-            {/* ========================================================= */}
-            {/* STEP 2: GAMIFIED CONCEPT CHECK (RAPID-FIRE QUIZ) */}
-            {/* ========================================================= */}
-            {phase === "concept-check" && (
-              <motion.div
-                key="phase-concept-check"
-                custom={phaseDirection}
-                variants={phaseSlideVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                id="quest-phase-concept-check"
-                className="space-y-6"
-              >
-                <div
-                  className={`border-2 rounded-3xl p-6 sm:p-8 space-y-6 ${
-                    isDark
-                      ? "bg-[#18181B] border-[#3F3F46] text-zinc-100 shadow-xl"
-                      : "bg-[#FFFDF9] border-[#1E1B18] shadow-[5px_5px_0px_#1E1B18] text-[#1E1B18]"
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`text-xs font-mono uppercase tracking-widest font-black ${
-                          isDark ? "text-amber-400" : "text-[#4F46E5]"
-                        }`}
-                      >
-                        {conceptCheckData.contextPill || "Step 2: Rapid Concept Check"}
-                      </span>
-                      <span className="text-xs font-mono font-black px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-500 border border-amber-400/40">
-                        Instant Feedback ⚡
-                      </span>
-                    </div>
-                    <h2 className="text-xl sm:text-2xl font-black tracking-tight">
-                      {conceptCheckData.prompt}
+                <AnimatePresence mode="wait" custom={cardDirection}>
+                  <motion.div
+                    key={`qa-card-${activeQACardIdx}`}
+                    custom={cardDirection}
+                    variants={cardSlideVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="space-y-5"
+                  >
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                      {currentQACard.question}
                     </h2>
-                  </div>
 
-                  {/* Multiple Choice Options */}
-                  <div className="space-y-3 pt-2">
-                    {conceptCheckData.options.map((opt) => {
-                      const isSelected = selectedConceptOption === opt.id;
-                      const showFeedback = conceptSubmitted;
-
-                      let cardStyle = isDark
-                        ? "bg-[#27272A] border-[#3F3F46] text-zinc-200 hover:border-zinc-500"
-                        : "bg-white border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-50 shadow-[2px_2px_0px_#1E1B18]";
-
-                      if (isSelected && !showFeedback) {
-                        cardStyle = isDark
-                          ? "bg-amber-400/20 border-amber-400 text-amber-200 shadow-md"
-                          : "bg-[#EEF2FF] border-[#4F46E5] text-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]";
-                      } else if (showFeedback) {
-                        if (opt.isCorrect) {
-                          cardStyle = isDark
-                            ? "bg-emerald-950/60 border-emerald-500 text-emerald-200 shadow-md"
-                            : "bg-[#ECFDF5] border-emerald-700 text-emerald-950 shadow-[3px_3px_0px_#047857]";
-                        } else if (isSelected && !opt.isCorrect) {
-                          cardStyle = isDark
-                            ? "bg-rose-950/60 border-rose-500 text-rose-200 shadow-md"
-                            : "bg-[#FFF1F2] border-rose-700 text-rose-950 shadow-[3px_3px_0px_#BE123C]";
-                        }
-                      }
-
-                      return (
-                        <motion.div
-                          key={opt.id}
-                          whileHover={!conceptSubmitted ? { scale: 1.01, x: 2 } : {}}
-                          whileTap={!conceptSubmitted ? { scale: 0.99 } : {}}
-                          onClick={() => {
-                            if (!conceptSubmitted) {
-                              soundFx.playTap();
-                              setSelectedConceptOption(opt.id);
-                            }
-                          }}
-                          className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${cardStyle}`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 text-xs font-black font-mono ${
-                                isSelected
-                                  ? isDark
-                                    ? "border-amber-400 bg-amber-400 text-zinc-950"
-                                    : "border-[#1E1B18] bg-[#4F46E5] text-white"
-                                  : isDark
-                                  ? "border-zinc-600"
-                                  : "border-[#1E1B18]"
-                              }`}
-                            >
-                              {isSelected ? "✓" : ""}
-                            </div>
-                            <div className="space-y-1.5 text-xs sm:text-sm leading-relaxed font-bold flex-1">
-                              <div>{opt.text}</div>
-                              {showFeedback && (isSelected || opt.isCorrect) && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 6 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className={`p-2.5 rounded-xl border text-xs font-mono font-medium ${
-                                    opt.isCorrect
-                                      ? isDark
-                                        ? "bg-emerald-900/30 border-emerald-700/50 text-emerald-300"
-                                        : "bg-emerald-100/70 border-emerald-300 text-emerald-900"
-                                      : isDark
-                                      ? "bg-rose-900/30 border-rose-700/50 text-rose-300"
-                                      : "bg-rose-100/70 border-rose-300 text-rose-900"
-                                  }`}
-                                >
-                                  {opt.explanation}
-                                </motion.div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Gamified Success / Try Again Feedback Banner */}
-                  {conceptSubmitted && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.94, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                      className={`p-4 rounded-2xl border-2 flex items-center gap-3 ${
-                        isConceptCorrect
-                          ? isDark
-                            ? "bg-emerald-950/50 border-emerald-500 text-emerald-200"
-                            : "bg-[#DCFCE7] border-emerald-700 text-emerald-950 shadow-[2px_2px_0px_#047857]"
-                          : isDark
-                          ? "bg-rose-950/50 border-rose-500 text-rose-200"
-                          : "bg-[#FFE4E6] border-rose-700 text-rose-950 shadow-[2px_2px_0px_#BE123C]"
-                      }`}
-                    >
-                      <div className="text-2xl">{isConceptCorrect ? "🎉" : "💡"}</div>
-                      <div className="flex-1">
-                        <div className="font-black text-sm uppercase tracking-wide">
-                          {isConceptCorrect ? conceptPraise : "Not quite, but you're learning!"}
-                        </div>
-                        <div className="text-xs font-medium opacity-90 mt-0.5">
-                          {isConceptCorrect
-                            ? conceptCheckData.encouragement
-                            : "Check the explanation above and try another option!"}
-                        </div>
+                    <div className="apple-surface-muted p-5 rounded-2xl space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Core Concept</span>
                       </div>
-                      {!isConceptCorrect && (
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            soundFx.playTap();
-                            setConceptSubmitted(false);
-                            setSelectedConceptOption(null);
-                          }}
-                          className="px-3 py-1.5 rounded-xl border-2 text-xs font-mono font-black uppercase bg-white dark:bg-zinc-800 text-current hover:opacity-80"
-                        >
-                          Try Again
-                        </motion.button>
-                      )}
-                    </motion.div>
-                  )}
+                      <p className="text-sm sm:text-base leading-relaxed">
+                        {currentQACard.answer}
+                      </p>
+                    </div>
 
-                  {/* Bottom Actions */}
-                  <div className="flex items-center justify-between pt-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => {
-                        soundFx.playTap();
-                        handleSwitchPhase("learn");
-                      }}
-                      className={`px-4 py-2.5 rounded-xl border-2 text-xs font-mono font-black uppercase transition-all ${
+                    <div
+                      className={`p-5 rounded-2xl border flex items-start gap-3.5 ${
                         isDark
-                          ? "border-[#3F3F46] text-zinc-400 hover:text-zinc-100 bg-[#27272A]"
-                          : "border-[#1E1B18] text-[#1E1B18] bg-white hover:bg-zinc-100 shadow-[2px_2px_0px_#1E1B18]"
+                          ? "bg-[#2997FF]/[0.07] border-[#2997FF]/20 text-zinc-200"
+                          : "bg-[#0071E3]/[0.04] border-[#0071E3]/15 text-[#1D1D1F]"
                       }`}
                     >
-                      ← Review Cards
-                    </motion.button>
-
-                    {!conceptSubmitted ? (
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.96 }}
-                        id="submit-concept-check-btn"
-                        onClick={handleConceptSubmit}
-                        disabled={!selectedConceptOption}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all disabled:opacity-40 ${
-                          isDark
-                            ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 shadow-md"
-                            : "bg-[#1E1B18] text-white hover:bg-black border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                        }`}
-                      >
-                        Check Answer ⚡
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.96 }}
-                        id="proceed-to-boss-challenge-btn"
-                        onClick={handleNextPhase}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
-                          isDark
-                            ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-md"
-                            : "bg-[#059669] text-white hover:bg-emerald-700 border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                        }`}
-                      >
-                        <span>Advance to Boss Challenge ⚔️</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </motion.button>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ========================================================= */}
-            {/* STEP 3: SCENARIO-BASED BOSS CHALLENGE */}
-            {/* ========================================================= */}
-            {phase === "boss-challenge" && (
-              <motion.div
-                key="phase-boss-challenge"
-                custom={phaseDirection}
-                variants={phaseSlideVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                id="quest-phase-boss-challenge"
-                className="space-y-6"
-              >
-                <div
-                  className={`border-2 rounded-3xl p-6 sm:p-8 space-y-6 relative ${
-                    isDark
-                      ? "bg-[#18181B] border-[#3F3F46] text-zinc-100 shadow-xl"
-                      : "bg-[#FFFDF9] border-[#1E1B18] shadow-[5px_5px_0px_#1E1B18] text-[#1E1B18]"
-                  }`}
-                >
-                  {/* Boss Banner */}
-                  <div
-                    className={`p-4 rounded-2xl border-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                      isDark
-                        ? "bg-gradient-to-r from-red-950/40 to-amber-950/30 border-red-500/40 text-red-200"
-                        : "bg-[#FFF1F2] border-[#E11D48] text-[#1E1B18] shadow-[2px_2px_0px_#E11D48]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center text-2xl shrink-0 shadow-md border-2 border-current">
-                        {bossChallengeData.bossAvatar || "⚔️"}
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-mono font-black uppercase tracking-widest text-red-600 dark:text-red-400">
-                          Step 3: Final Boss Encounter
-                        </div>
-                        <h3 className="text-base sm:text-lg font-black uppercase">
-                          {bossChallengeData.title}
-                        </h3>
-                      </div>
-                    </div>
-                    {bossChallengeData.bossQuote && (
-                      <div className="text-xs italic font-serif opacity-80 sm:text-right">
-                        {bossChallengeData.bossQuote}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Scenario Card */}
-                  <div
-                    className={`p-4 rounded-2xl border-2 text-xs sm:text-sm leading-relaxed space-y-1 ${
-                      isDark
-                        ? "bg-[#27272A] border-[#3F3F46] text-zinc-300"
-                        : "bg-white border-[#1E1B18] text-zinc-800 shadow-[2px_2px_0px_#1E1B18]"
-                    }`}
-                  >
-                    <span className="font-mono font-black uppercase tracking-wider text-[10px] text-amber-500 block">
-                      The Real-World Scenario:
-                    </span>
-                    <p className="font-medium">{bossChallengeData.scenario}</p>
-                  </div>
-
-                  {/* The Boss Question */}
-                  <div className="space-y-2">
-                    <h2 className="text-lg sm:text-xl font-black uppercase tracking-tight">
-                      {bossChallengeData.question}
-                    </h2>
-                  </div>
-
-                  {/* Options */}
-                  <div className="space-y-3">
-                    {bossChallengeData.options.map((opt) => {
-                      const isSelected = selectedBossOption === opt.id;
-                      const showFeedback = bossSubmitted;
-
-                      let cardStyle = isDark
-                        ? "bg-[#27272A] border-[#3F3F46] text-zinc-200 hover:border-zinc-500"
-                        : "bg-white border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-50 shadow-[2px_2px_0px_#1E1B18]";
-
-                      if (isSelected && !showFeedback) {
-                        cardStyle = isDark
-                          ? "bg-amber-400/20 border-amber-400 text-amber-200"
-                          : "bg-[#EEF2FF] border-[#4F46E5] text-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]";
-                      } else if (showFeedback) {
-                        if (opt.isCorrect) {
-                          cardStyle = isDark
-                            ? "bg-emerald-950/60 border-emerald-500 text-emerald-200 shadow-md"
-                            : "bg-[#ECFDF5] border-emerald-700 text-emerald-950 shadow-[3px_3px_0px_#047857]";
-                        } else if (isSelected && !opt.isCorrect) {
-                          cardStyle = isDark
-                            ? "bg-rose-950/60 border-rose-500 text-rose-200 shadow-md"
-                            : "bg-[#FFF1F2] border-rose-700 text-rose-950 shadow-[3px_3px_0px_#BE123C]";
-                        }
-                      }
-
-                      return (
-                        <motion.div
-                          key={opt.id}
-                          whileHover={!bossSubmitted ? { scale: 1.01, x: 2 } : {}}
-                          whileTap={!bossSubmitted ? { scale: 0.99 } : {}}
-                          onClick={() => {
-                            if (!bossSubmitted) {
-                              soundFx.playTap();
-                              setSelectedBossOption(opt.id);
-                            }
-                          }}
-                          className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${cardStyle}`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 text-xs font-black font-mono ${
-                                isSelected
-                                  ? isDark
-                                    ? "border-amber-400 bg-amber-400 text-zinc-950"
-                                    : "border-[#1E1B18] bg-[#4F46E5] text-white"
-                                  : isDark
-                                  ? "border-zinc-600"
-                                  : "border-[#1E1B18]"
-                              }`}
-                            >
-                              {isSelected ? "✓" : ""}
-                            </div>
-                            <div className="space-y-1.5 text-xs sm:text-sm leading-relaxed font-bold flex-1">
-                              <div>{opt.text}</div>
-                              {showFeedback && (isSelected || opt.isCorrect) && (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 6 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className={`p-2.5 rounded-xl border text-xs font-mono font-medium ${
-                                    opt.isCorrect
-                                      ? isDark
-                                        ? "bg-emerald-900/30 border-emerald-700/50 text-emerald-300"
-                                        : "bg-emerald-100/70 border-emerald-300 text-emerald-900"
-                                      : isDark
-                                      ? "bg-rose-900/30 border-rose-700/50 text-rose-300"
-                                      : "bg-rose-100/70 border-rose-300 text-rose-900"
-                                  }`}
-                                >
-                                  {opt.explanation}
-                                </motion.div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Boss Defeated Takeaway Banner */}
-                  {bossSubmitted && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                      className="space-y-3"
-                    >
                       <div
-                        className={`p-4 rounded-2xl border-2 flex items-center gap-3 ${
-                          isBossCorrect
-                            ? isDark
-                              ? "bg-emerald-950/50 border-emerald-500 text-emerald-200"
-                              : "bg-[#DCFCE7] border-emerald-700 text-emerald-950 shadow-[2px_2px_0px_#047857]"
-                            : isDark
-                            ? "bg-rose-950/50 border-rose-500 text-rose-200"
-                            : "bg-[#FFE4E6] border-rose-700 text-rose-950 shadow-[2px_2px_0px_#BE123C]"
-                        }`}
-                      >
-                        <div className="text-2xl">{isBossCorrect ? "🏆" : "🛡️"}</div>
-                        <div className="flex-1">
-                          <div className="font-black text-sm uppercase tracking-wide">
-                            {isBossCorrect ? bossPraise : "The Boss parried your move!"}
-                          </div>
-                          <div className="text-xs font-medium opacity-90 mt-0.5">
-                            {isBossCorrect
-                              ? bossChallengeData.victoryMessage
-                              : "Review the logic and try an alternate strategy."}
-                          </div>
-                        </div>
-                        {!isBossCorrect && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                              soundFx.playTap();
-                              setBossSubmitted(false);
-                              setSelectedBossOption(null);
-                            }}
-                            className="px-3 py-1.5 rounded-xl border-2 text-xs font-mono font-black uppercase bg-white dark:bg-zinc-800 text-current hover:opacity-80"
-                          >
-                            Retry Challenge
-                          </motion.button>
-                        )}
-                      </div>
-
-                      {/* Deep Dive Note */}
-                      <div
-                        className={`p-4 border-2 rounded-2xl space-y-1 ${
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                           isDark
-                            ? "bg-[#27272A] border-[#3F3F46]"
-                            : "bg-[#FEF08A]/60 border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
+                            ? "bg-[#2997FF]/20 text-[#2997FF]"
+                            : "bg-[#0071E3]/15 text-[#0071E3]"
                         }`}
                       >
-                        <span
-                          className={`text-[11px] font-mono uppercase font-black ${
-                            isDark ? "text-amber-400" : "text-[#4F46E5]"
+                        <Lightbulb className="w-4 h-4" />
+                      </div>
+                      <div className="space-y-1 text-xs sm:text-sm">
+                        <span className="font-semibold block">
+                          Real-World Analogy
+                        </span>
+                        <p
+                          className={`leading-relaxed ${
+                            isDark ? "text-zinc-300" : "text-[#424245]"
                           }`}
                         >
-                          Engineering Deep Dive Takeaway:
-                        </span>
-                        <p className={`text-xs leading-relaxed font-medium ${isDark ? "text-zinc-300" : "text-zinc-800"}`}>
-                          {bossChallengeData.deepDiveExplanation}
+                          {currentQACard.analogy}
                         </p>
                       </div>
-                    </motion.div>
-                  )}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
 
-                  {/* Bottom Actions */}
-                  <div className="flex items-center justify-between pt-2">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.96 }}
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => {
+                      soundFx.playTap();
+                      setCardDirection(-1);
+                      setActiveQACardIdx((prev) => Math.max(0, prev - 1));
+                    }}
+                    disabled={activeQACardIdx === 0}
+                    className={`min-h-[42px] px-4 py-2 rounded-full border text-xs font-semibold transition-colors disabled:opacity-30 ${
+                      isDark
+                        ? "border-white/[0.1] text-zinc-300 hover:bg-white/[0.06]"
+                        : "border-black/[0.08] text-[#1D1D1F] hover:bg-black/[0.04]"
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  {activeQACardIdx < qaCards.length - 1 ? (
+                    <button
+                      id="next-qa-card-btn"
                       onClick={() => {
                         soundFx.playTap();
-                        handleSwitchPhase("concept-check");
+                        setCardDirection(1);
+                        setActiveQACardIdx((prev) => prev + 1);
                       }}
-                      className={`px-4 py-2.5 rounded-xl border-2 text-xs font-mono font-black uppercase transition-all ${
-                        isDark
-                          ? "border-[#3F3F46] text-zinc-400 hover:text-zinc-100 bg-[#27272A]"
-                          : "border-[#1E1B18] text-[#1E1B18] bg-white hover:bg-zinc-100 shadow-[2px_2px_0px_#1E1B18]"
-                      }`}
+                      className="min-h-[42px] px-5 py-2 rounded-full font-semibold text-xs bg-[#0071E3] hover:bg-[#0077ED] text-white flex items-center gap-1.5 transition-colors whitespace-nowrap"
                     >
-                      ← Concept Check
-                    </motion.button>
-
-                    {!bossSubmitted ? (
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.96 }}
-                        id="submit-boss-challenge-btn"
-                        onClick={handleBossSubmit}
-                        disabled={!selectedBossOption}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all disabled:opacity-40 ${
-                          isDark
-                            ? "bg-amber-400 text-zinc-950 hover:bg-amber-300 shadow-md"
-                            : "bg-[#1E1B18] text-white hover:bg-black border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                        }`}
-                      >
-                        Execute Battle Strategy ⚔️
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.96 }}
-                        id="claim-quest-reward-btn"
-                        onClick={handleNextPhase}
-                        className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
-                          isDark
-                            ? "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-md"
-                            : "bg-[#059669] text-white hover:bg-emerald-700 border-2 border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-                        }`}
-                      >
-                        <span>Claim XP & Victory! 🌟</span>
-                        <Award className="w-4 h-4" />
-                      </motion.button>
-                    )}
-                  </div>
+                      <span>
+                        Next ({activeQACardIdx + 2}/{qaCards.length})
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button
+                      id="proceed-to-concept-check-btn"
+                      onClick={handleNextPhase}
+                      className="min-h-[42px] px-5 py-2 rounded-full font-semibold text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition-colors whitespace-nowrap"
+                    >
+                      <span>Continue to Quiz</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-              </motion.div>
-            )}
+              </div>
 
-            {/* ========================================================= */}
-            {/* STEP 4: REWARD & VICTORY SCREEN */}
-            {/* ========================================================= */}
-            {phase === "reward" && (
-              <motion.div
-                key="phase-reward"
-                custom={phaseDirection}
-                variants={phaseSlideVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                id="quest-phase-reward"
-                className={`border-2 rounded-3xl p-8 text-center space-y-6 ${
-                  isDark
-                    ? "bg-[#18181B] border-[#3F3F46] text-zinc-100 shadow-2xl"
-                    : "bg-[#FFFDF9] border-[#1E1B18] shadow-[5px_5px_0px_#1E1B18] text-[#1E1B18]"
-                }`}
-              >
-                <motion.div
-                  initial={{ scale: 0, rotate: -20 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
-                  className={`w-20 h-20 rounded-3xl border-2 flex items-center justify-center mx-auto shadow-md ${
-                    isDark
-                      ? "bg-amber-400/20 border-amber-400 text-amber-300"
-                      : "bg-[#FEF08A] border-[#1E1B18] text-[#1E1B18]"
+              {/* Key Terms */}
+              <div className="apple-surface rounded-3xl p-5 sm:p-6 space-y-3">
+                <div
+                  className={`flex items-center gap-2 text-xs font-semibold ${
+                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
                   }`}
                 >
-                  <Award className="w-10 h-10 stroke-[2.5]" />
-                </motion.div>
+                  <Sparkles className="w-3.5 h-3.5 text-[#0071E3] dark:text-[#2997FF]" />
+                  <span>Key Terms</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {(quest.learn.keyConcepts || []).map((kc, idx) => (
+                    <div
+                      key={idx}
+                      className="apple-surface-muted p-3.5 rounded-2xl"
+                    >
+                      <div className="text-xs font-semibold">{kc.term}</div>
+                      <div
+                        className={`text-xs mt-1 leading-relaxed ${
+                          isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                        }`}
+                      >
+                        {kc.definition}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="space-y-1"
-                >
-                  <span
-                    className={`text-xs font-mono uppercase tracking-widest font-black ${
-                      isDark ? "text-emerald-400" : "text-[#059669]"
+          {/* STEP 2: CONCEPT CHECK */}
+          {phase === "concept-check" && (
+            <motion.div
+              key="phase-concept-check"
+              custom={phaseDirection}
+              variants={phaseSlideVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              id="quest-phase-concept-check"
+              className="space-y-6"
+            >
+              <div className="apple-surface rounded-3xl p-6 sm:p-8 space-y-6">
+                <div className="space-y-1.5">
+                  <div
+                    className={`text-xs font-medium ${
+                      isDark ? "text-[#2997FF]" : "text-[#0071E3]"
                     }`}
                   >
-                    Mission Accomplished
-                  </span>
-                  <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight">
-                    Quest Mastered! 🚀
+                    {conceptCheckData.contextPill || "Concept Check"}
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                    {conceptCheckData.prompt}
                   </h2>
-                  <p className={`text-sm max-w-md mx-auto font-medium ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
-                    You successfully mastered <span className="font-black uppercase">{quest.title}</span> through the pure Q&A learning journey!
-                  </p>
-                </motion.div>
+                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto text-left"
-                >
-                  <div
-                    className={`border-2 p-3.5 rounded-2xl ${
-                      isDark
-                        ? "bg-[#27272A] border-[#3F3F46]"
-                        : "bg-white border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                    }`}
-                  >
-                    <div className={`text-[11px] font-mono font-bold ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                      XP Awarded
-                    </div>
-                    <div className="text-xl font-black font-mono text-amber-500">+{quest.xpReward} XP</div>
-                  </div>
-                  <div
-                    className={`border-2 p-3.5 rounded-2xl ${
-                      isDark
-                        ? "bg-[#27272A] border-[#3F3F46]"
-                        : "bg-white border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                    }`}
-                  >
-                    <div className={`text-[11px] font-mono font-bold ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                      Skill Unlocked
-                    </div>
-                    <div className="text-sm font-black truncate">{quest.skillTag}</div>
-                  </div>
-                  <div
-                    className={`border-2 p-3.5 rounded-2xl ${
-                      isDark
-                        ? "bg-[#27272A] border-[#3F3F46]"
-                        : "bg-white border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
-                    }`}
-                  >
-                    <div className={`text-[11px] font-mono font-bold ${isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-                      Badge Earned
-                    </div>
-                    <div className="text-sm font-black truncate text-emerald-600 dark:text-emerald-400">
-                      {quest.badgeTitle || "Mastery"}
-                    </div>
-                  </div>
-                </motion.div>
+                <div className="space-y-2.5">
+                  {conceptCheckData.options.map((opt) => {
+                    const isSelected = selectedConceptOption === opt.id;
+                    const showFeedback = conceptSubmitted;
 
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                  className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4"
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.96 }}
-                    id="return-journey-finish-btn"
-                    onClick={onBackToJourney}
-                    className={`w-full sm:w-auto px-6 py-3 rounded-xl border-2 text-xs font-mono font-black uppercase transition-all ${
-                      isDark
-                        ? "bg-[#27272A] border-[#3F3F46] text-zinc-300 hover:text-zinc-100"
-                        : "bg-white border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-100 shadow-[2px_2px_0px_#1E1B18]"
+                    let cardStyle = isDark
+                      ? "bg-[#2C2C2E]/70 border-white/[0.08] text-zinc-200 hover:border-white/20"
+                      : "bg-[#F9F9FB] border-black/[0.06] text-[#1D1D1F] hover:border-black/15";
+
+                    if (isSelected && !showFeedback) {
+                      cardStyle = isDark
+                        ? "bg-[#2997FF]/15 border-[#2997FF]/60 text-white"
+                        : "bg-[#0071E3]/[0.07] border-[#0071E3]/60 text-[#1D1D1F]";
+                    } else if (showFeedback) {
+                      if (opt.isCorrect) {
+                        cardStyle = isDark
+                          ? "bg-emerald-500/15 border-emerald-400/50 text-emerald-100"
+                          : "bg-emerald-50 border-emerald-300 text-emerald-950";
+                      } else if (isSelected && !opt.isCorrect) {
+                        cardStyle = isDark
+                          ? "bg-rose-500/15 border-rose-400/50 text-rose-100"
+                          : "bg-rose-50 border-rose-300 text-rose-950";
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() => {
+                          if (!conceptSubmitted) {
+                            soundFx.playTap();
+                            setSelectedConceptOption(opt.id);
+                          }
+                        }}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${cardStyle}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-semibold ${
+                              isSelected
+                                ? "border-[#0071E3] bg-[#0071E3] text-white"
+                                : isDark
+                                ? "border-zinc-600"
+                                : "border-zinc-300"
+                            }`}
+                          >
+                            {isSelected ? "✓" : ""}
+                          </div>
+                          <div className="space-y-2 text-xs sm:text-sm leading-relaxed font-medium flex-1">
+                            <div>{opt.text}</div>
+                            {showFeedback && (isSelected || opt.isCorrect) && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                                  opt.isCorrect
+                                    ? isDark
+                                      ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-200"
+                                      : "bg-white border-emerald-200 text-emerald-900"
+                                    : isDark
+                                    ? "bg-rose-950/40 border-rose-500/30 text-rose-200"
+                                    : "bg-white border-rose-200 text-rose-900"
+                                }`}
+                              >
+                                {opt.explanation}
+                              </motion.div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {conceptSubmitted && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+                      isConceptCorrect
+                        ? isDark
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200"
+                          : "bg-emerald-50 border-emerald-200 text-emerald-950"
+                        : isDark
+                        ? "bg-rose-500/10 border-rose-500/30 text-rose-200"
+                        : "bg-rose-50 border-rose-200 text-rose-950"
                     }`}
                   >
-                    Return to Journey Path
-                  </motion.button>
-                  {onNavigateNextQuest && (
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.96 }}
-                      id="next-quest-btn"
-                      onClick={() => onNavigateNextQuest("next")}
-                      className={`w-full sm:w-auto px-6 py-3 rounded-xl border-2 text-xs font-mono font-black uppercase flex items-center justify-center gap-2 transition-all ${
-                        isDark
-                          ? "bg-amber-400 border-amber-500 text-zinc-950 hover:bg-amber-300 shadow-md"
-                          : "bg-[#1E1B18] border-[#1E1B18] text-white hover:bg-black shadow-[3px_3px_0px_#1E1B18]"
+                    <div>
+                      <div className="font-semibold text-sm">
+                        {isConceptCorrect
+                          ? conceptPraise
+                          : "Not quite — take another look"}
+                      </div>
+                      <div className="text-xs opacity-85 mt-0.5">
+                        {isConceptCorrect
+                          ? conceptCheckData.encouragement
+                          : "Review the note above and try another option."}
+                      </div>
+                    </div>
+                    {!isConceptCorrect && (
+                      <button
+                        onClick={() => {
+                          soundFx.playTap();
+                          setConceptSubmitted(false);
+                          setSelectedConceptOption(null);
+                        }}
+                        className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-zinc-800 border border-black/10 dark:border-white/10 shrink-0"
+                      >
+                        Try Again
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => {
+                      soundFx.playTap();
+                      handleSwitchPhase("learn");
+                    }}
+                    className={`min-h-[42px] px-4 py-2 rounded-full border text-xs font-semibold transition-colors ${
+                      isDark
+                        ? "border-white/[0.1] text-zinc-300 hover:bg-white/[0.06]"
+                        : "border-black/[0.08] text-[#1D1D1F] hover:bg-black/[0.04]"
+                    }`}
+                  >
+                    Review Cards
+                  </button>
+
+                  {!conceptSubmitted ? (
+                    <button
+                      id="submit-concept-check-btn"
+                      onClick={handleConceptSubmit}
+                      disabled={!selectedConceptOption}
+                      className="min-h-[42px] px-6 py-2 rounded-full font-semibold text-xs bg-[#0071E3] hover:bg-[#0077ED] text-white transition-colors disabled:opacity-40"
+                    >
+                      Check Answer
+                    </button>
+                  ) : (
+                    <button
+                      id="proceed-to-boss-challenge-btn"
+                      onClick={handleNextPhase}
+                      className="min-h-[42px] px-5 py-2 rounded-full font-semibold text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>Continue to Challenge</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 3: SCENARIO CHALLENGE */}
+          {phase === "boss-challenge" && (
+            <motion.div
+              key="phase-boss-challenge"
+              custom={phaseDirection}
+              variants={phaseSlideVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              id="quest-phase-boss-challenge"
+              className="space-y-6"
+            >
+              <div className="apple-surface rounded-3xl p-6 sm:p-8 space-y-6">
+                <div className="space-y-1">
+                  <div
+                    className={`text-xs font-medium ${
+                      isDark ? "text-[#2997FF]" : "text-[#0071E3]"
+                    }`}
+                  >
+                    Step 3 · Applied Scenario
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold tracking-tight">
+                    {bossChallengeData.title}
+                  </h3>
+                </div>
+
+                <div className="apple-surface-muted p-4 sm:p-5 rounded-2xl text-xs sm:text-sm leading-relaxed space-y-1">
+                  <span
+                    className={`text-xs font-semibold block ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                    }`}
+                  >
+                    Scenario
+                  </span>
+                  <p>{bossChallengeData.scenario}</p>
+                </div>
+
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight">
+                  {bossChallengeData.question}
+                </h2>
+
+                <div className="space-y-2.5">
+                  {bossChallengeData.options.map((opt) => {
+                    const isSelected = selectedBossOption === opt.id;
+                    const showFeedback = bossSubmitted;
+
+                    let cardStyle = isDark
+                      ? "bg-[#2C2C2E]/70 border-white/[0.08] text-zinc-200 hover:border-white/20"
+                      : "bg-[#F9F9FB] border-black/[0.06] text-[#1D1D1F] hover:border-black/15";
+
+                    if (isSelected && !showFeedback) {
+                      cardStyle = isDark
+                        ? "bg-[#2997FF]/15 border-[#2997FF]/60 text-white"
+                        : "bg-[#0071E3]/[0.07] border-[#0071E3]/60 text-[#1D1D1F]";
+                    } else if (showFeedback) {
+                      if (opt.isCorrect) {
+                        cardStyle = isDark
+                          ? "bg-emerald-500/15 border-emerald-400/50 text-emerald-100"
+                          : "bg-emerald-50 border-emerald-300 text-emerald-950";
+                      } else if (isSelected && !opt.isCorrect) {
+                        cardStyle = isDark
+                          ? "bg-rose-500/15 border-rose-400/50 text-rose-100"
+                          : "bg-rose-50 border-rose-300 text-rose-950";
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() => {
+                          if (!bossSubmitted) {
+                            soundFx.playTap();
+                            setSelectedBossOption(opt.id);
+                          }
+                        }}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${cardStyle}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-semibold ${
+                              isSelected
+                                ? "border-[#0071E3] bg-[#0071E3] text-white"
+                                : isDark
+                                ? "border-zinc-600"
+                                : "border-zinc-300"
+                            }`}
+                          >
+                            {isSelected ? "✓" : ""}
+                          </div>
+                          <div className="space-y-2 text-xs sm:text-sm leading-relaxed font-medium flex-1">
+                            <div>{opt.text}</div>
+                            {showFeedback && (isSelected || opt.isCorrect) && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                                  opt.isCorrect
+                                    ? isDark
+                                      ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-200"
+                                      : "bg-white border-emerald-200 text-emerald-900"
+                                    : isDark
+                                    ? "bg-rose-950/40 border-rose-500/30 text-rose-200"
+                                    : "bg-white border-rose-200 text-rose-900"
+                                }`}
+                              >
+                                {opt.explanation}
+                              </motion.div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {bossSubmitted && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-3"
+                  >
+                    <div
+                      className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+                        isBossCorrect
+                          ? isDark
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-200"
+                            : "bg-emerald-50 border-emerald-200 text-emerald-950"
+                          : isDark
+                          ? "bg-rose-500/10 border-rose-500/30 text-rose-200"
+                          : "bg-rose-50 border-rose-200 text-rose-950"
                       }`}
                     >
-                      <span>Continue to Next Quest</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </motion.button>
+                      <div>
+                        <div className="font-semibold text-sm">
+                          {isBossCorrect
+                            ? bossPraise
+                            : "Try another strategy"}
+                        </div>
+                        <div className="text-xs opacity-85 mt-0.5">
+                          {isBossCorrect
+                            ? bossChallengeData.victoryMessage
+                            : "Review the feedback above and refine your choice."}
+                        </div>
+                      </div>
+                      {!isBossCorrect && (
+                        <button
+                          onClick={() => {
+                            soundFx.playTap();
+                            setBossSubmitted(false);
+                            setSelectedBossOption(null);
+                          }}
+                          className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white dark:bg-zinc-800 border border-black/10 dark:border-white/10 shrink-0"
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="apple-surface-muted p-4 rounded-2xl space-y-1">
+                      <span
+                        className={`text-xs font-semibold block ${
+                          isDark ? "text-[#2997FF]" : "text-[#0071E3]"
+                        }`}
+                      >
+                        Engineering Takeaway
+                      </span>
+                      <p className="text-xs leading-relaxed">
+                        {bossChallengeData.deepDiveExplanation}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={() => {
+                      soundFx.playTap();
+                      handleSwitchPhase("concept-check");
+                    }}
+                    className={`min-h-[42px] px-4 py-2 rounded-full border text-xs font-semibold transition-colors ${
+                      isDark
+                        ? "border-white/[0.1] text-zinc-300 hover:bg-white/[0.06]"
+                        : "border-black/[0.08] text-[#1D1D1F] hover:bg-black/[0.04]"
+                    }`}
+                  >
+                    Concept Check
+                  </button>
+
+                  {!bossSubmitted ? (
+                    <button
+                      id="submit-boss-challenge-btn"
+                      onClick={handleBossSubmit}
+                      disabled={!selectedBossOption}
+                      className="min-h-[42px] px-6 py-2 rounded-full font-semibold text-xs bg-[#0071E3] hover:bg-[#0077ED] text-white transition-colors disabled:opacity-40"
+                    >
+                      Submit Strategy
+                    </button>
+                  ) : (
+                    <button
+                      id="claim-quest-reward-btn"
+                      onClick={handleNextPhase}
+                      className="min-h-[42px] px-5 py-2 rounded-full font-semibold text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition-colors"
+                    >
+                      <span>Complete & Claim XP</span>
+                      <Award className="w-3.5 h-3.5" />
+                    </button>
                   )}
-                </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 4: REWARD */}
+          {phase === "reward" && (
+            <motion.div
+              key="phase-reward"
+              custom={phaseDirection}
+              variants={phaseSlideVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              id="quest-phase-reward"
+              className="apple-surface rounded-3xl p-8 sm:p-10 text-center space-y-6"
+            >
+              <motion.div
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto ${
+                  isDark
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-emerald-500/10 text-emerald-600"
+                }`}
+              >
+                <Award className="w-8 h-8" />
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
+
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  Mission Accomplished
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                  Quest Complete
+                </h2>
+                <p
+                  className={`text-sm max-w-md mx-auto ${
+                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                  }`}
+                >
+                  You mastered{" "}
+                  <span className="font-semibold text-current">
+                    {quest.title}
+                  </span>
+                  .
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto text-left">
+                <div className="apple-surface-muted p-4 rounded-2xl">
+                  <div
+                    className={`text-xs ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                    }`}
+                  >
+                    XP Awarded
+                  </div>
+                  <div className="text-lg font-bold font-mono tabular-nums text-[#0071E3] dark:text-[#2997FF] mt-0.5">
+                    +{quest.xpReward} XP
+                  </div>
+                </div>
+                <div className="apple-surface-muted p-4 rounded-2xl">
+                  <div
+                    className={`text-xs ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                    }`}
+                  >
+                    Skill Unlocked
+                  </div>
+                  <div className="text-sm font-semibold truncate mt-1">
+                    {quest.skillTag}
+                  </div>
+                </div>
+                <div className="apple-surface-muted p-4 rounded-2xl">
+                  <div
+                    className={`text-xs ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                    }`}
+                  >
+                    Badge
+                  </div>
+                  <div className="text-sm font-semibold truncate text-emerald-600 dark:text-emerald-400 mt-1">
+                    {quest.badgeTitle || "Mastery"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <button
+                  id="return-journey-finish-btn"
+                  onClick={onBackToJourney}
+                  className={`w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-full border text-xs font-semibold transition-colors ${
+                    isDark
+                      ? "border-white/[0.1] text-zinc-200 hover:bg-white/[0.06]"
+                      : "border-black/[0.08] text-[#1D1D1F] hover:bg-black/[0.04]"
+                  }`}
+                >
+                  Back to Path
+                </button>
+                {onNavigateNextQuest && (
+                  <button
+                    id="next-quest-btn"
+                    onClick={() => onNavigateNextQuest("next")}
+                    className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-full font-semibold text-xs bg-[#0071E3] hover:bg-[#0077ED] text-white flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <span>Next Lesson</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 };

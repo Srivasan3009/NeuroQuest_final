@@ -18,14 +18,15 @@ import {
   Check,
   Lock,
   ChevronRight,
-  Info,
   X,
-  PlusCircle,
-  RotateCcw
 } from "lucide-react";
 import { UserProfile, AppTheme, MilestoneBadge, Stage } from "../../types";
-import { computeMilestoneBadges, getAchievementsSummary } from "../../utils/achievements";
+import {
+  computeMilestoneBadges,
+  getAchievementsSummary,
+} from "../../utils/achievements";
 import { soundFx } from "../../utils/sound";
+import { AppleSurfaceButton } from "../ui/AppleSurfaceButton";
 
 interface AchievementsProps {
   user: UserProfile;
@@ -43,39 +44,40 @@ export const Achievements: React.FC<AchievementsProps> = ({
   onBack,
   onSetStreakDays,
   onCompleteFoundationQuest,
-  onResetProgress,
-  theme = "neumorphic"
+  theme = "neumorphic",
 }) => {
-  const isNeumorphic = theme === "neumorphic";
-  const isDark = theme === "obsidian-gold" || theme === "obsidian-noir";
-  const isRiso = !isDark && !isNeumorphic;
+  const isDark =
+    theme === "obsidian-gold" ||
+    theme === "obsidian-noir" ||
+    theme === "cyber-dark" ||
+    theme === "neon-matrix";
 
-  // Filter and Category States
-  const [filterStatus, setFilterStatus] = useState<"all" | "earned" | "in-progress">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "earned" | "in-progress"
+  >("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedBadge, setSelectedBadge] = useState<MilestoneBadge | null>(null);
+  const [selectedBadge, setSelectedBadge] = useState<MilestoneBadge | null>(
+    null
+  );
   const [showSimBench, setShowSimBench] = useState(false);
 
-  // Compute live badges
-  const badges = useMemo(() => computeMilestoneBadges(user, stages), [user, stages]);
+  const badges = useMemo(
+    () => computeMilestoneBadges(user, stages),
+    [user, stages]
+  );
   const summary = useMemo(() => getAchievementsSummary(badges), [badges]);
 
-  // Filtered badges
   const filteredBadges = useMemo(() => {
     return badges.filter((b) => {
-      // Status filter
       if (filterStatus === "earned" && !b.isEarned) return false;
       if (filterStatus === "in-progress" && b.isEarned) return false;
-
-      // Category filter
-      if (selectedCategory !== "all" && b.category !== selectedCategory) return false;
-
+      if (selectedCategory !== "all" && b.category !== selectedCategory)
+        return false;
       return true;
     });
   }, [badges, filterStatus, selectedCategory]);
 
-  // Icon mapping
-  const renderBadgeIcon = (iconName: string, className = "w-6 h-6") => {
+  const renderBadgeIcon = (iconName: string, className = "w-5 h-5") => {
     switch (iconName) {
       case "Flame":
         return <Flame className={className} />;
@@ -108,25 +110,16 @@ export const Achievements: React.FC<AchievementsProps> = ({
     }
   };
 
-  const getRarityBadgeStyle = (rarity: MilestoneBadge["rarity"]) => {
+  const getRarityColor = (rarity: MilestoneBadge["rarity"]) => {
     switch (rarity) {
       case "legendary":
-        return isDark
-          ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-          : "bg-amber-100 text-amber-900 border-amber-300";
+        return isDark ? "text-amber-300" : "text-amber-700";
       case "epic":
-        return isDark
-          ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
-          : "bg-purple-100 text-purple-900 border-purple-300";
+        return isDark ? "text-purple-300" : "text-purple-700";
       case "rare":
-        return isDark
-          ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
-          : "bg-indigo-100 text-indigo-900 border-indigo-300";
-      case "common":
+        return isDark ? "text-[#2997FF]" : "text-[#0071E3]";
       default:
-        return isDark
-          ? "bg-zinc-800 text-zinc-300 border-zinc-700"
-          : "bg-zinc-100 text-zinc-700 border-zinc-300";
+        return isDark ? "text-zinc-400" : "text-[#6E6E73]";
     }
   };
 
@@ -150,352 +143,290 @@ export const Achievements: React.FC<AchievementsProps> = ({
   };
 
   return (
-    <div id="achievements-view" className="space-y-5 pb-28 max-w-lg mx-auto px-4 pt-2 animate-in fade-in duration-200">
+    <div
+      id="achievements-view"
+      className="space-y-5 pb-32 max-w-xl mx-auto px-4 sm:px-6 pt-5"
+    >
       {/* Top Header */}
-      <div
-        className={`flex items-center justify-between py-2 border-b ${
-          isDark ? "border-[#27272A]" : "border-[#1E1B18]"
-        }`}
-      >
+      <div className="flex items-center justify-between py-2">
         <button
           id="btn-back-to-profile"
           onClick={() => {
             soundFx.playTap();
             onBack();
           }}
-          className={`flex items-center gap-1.5 font-black text-xs uppercase tracking-wider transition-colors ${
-            isDark ? "text-zinc-300 hover:text-amber-400" : "text-[#1E1B18] hover:text-[#4F46E5]"
+          className={`min-h-[40px] flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+            isDark
+              ? "text-[#2997FF] hover:text-blue-300"
+              : "text-[#0071E3] hover:text-[#005BB5]"
           }`}
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>YOU PROFILE</span>
+          <span>Profile</span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <Trophy className={`w-4 h-4 ${isDark ? "text-amber-400" : "text-[#4F46E5]"}`} />
-          <span
-            className={`text-xs font-black uppercase tracking-wide ${
-              isDark ? "text-zinc-100" : "text-[#1E1B18]"
-            }`}
-          >
-            ACHIEVEMENTS
-          </span>
-        </div>
+        <h1 className="text-base font-bold tracking-tight">Achievements</h1>
 
-        {/* Milestone Simulation Toggle */}
         <button
           onClick={() => {
             soundFx.playTap();
             setShowSimBench(!showSimBench);
           }}
-          className={`text-[10px] font-mono px-2 py-1 rounded-lg border font-bold ${
+          className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
             showSimBench
-              ? isDark
-                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                : "bg-[#FEF08A] text-[#1E1B18] border-[#1E1B18]"
+              ? "bg-[#0071E3] text-white"
               : isDark
-              ? "bg-[#27272A] text-zinc-400 border-zinc-700 hover:text-zinc-200"
-              : "bg-white text-zinc-600 border-zinc-300 hover:border-[#1E1B18]"
+              ? "bg-white/[0.06] text-zinc-300 hover:bg-white/[0.1]"
+              : "bg-black/[0.05] text-[#1D1D1F] hover:bg-black/[0.08]"
           }`}
           title="Toggle Milestone Test Bench"
         >
-          {showSimBench ? "HIDE SIM" : "TEST BENCH"}
+          {showSimBench ? "Hide Sim" : "Test"}
         </button>
       </div>
 
-      {/* Interactive Milestone Testing Bench */}
+      {/* Milestone Test Bench */}
       {showSimBench && (
-        <div
-          className={`p-4 rounded-2xl border-2 space-y-3 animate-in slide-in-from-top-2 ${
-            isDark
-              ? "bg-[#18181B] border-amber-500/50 text-zinc-200"
-              : "bg-[#FFF9EA] border-[#1E1B18] text-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-500" />
-              <span className="text-xs font-black uppercase">MILESTONE TEST BENCH</span>
-            </div>
-            <span className="text-[10px] font-mono text-zinc-500">Live preview triggers</span>
+        <div className="apple-surface p-4 rounded-3xl space-y-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold">Milestone Simulator</span>
+            <span className={isDark ? "text-zinc-400" : "text-[#6E6E73]"}>
+              Preview triggers
+            </span>
           </div>
-          <p className="text-[11px] opacity-80 leading-relaxed">
-            Quickly trigger milestone thresholds to inspect unlocked badge states and sound feedback:
-          </p>
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-2">
             <button
               id="test-bench-week-streak"
               onClick={() => handleTestStreak(7)}
-              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
+              className={`p-2.5 rounded-2xl border text-left flex items-center justify-between text-xs font-medium transition-colors ${
                 user.streakDays >= 7
-                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                   : isDark
-                  ? "bg-[#27272A] border-zinc-700 hover:border-amber-400"
-                  : "bg-white border-[#1E1B18] hover:bg-[#FEF08A]"
+                  ? "bg-white/[0.03] border-white/[0.08]"
+                  : "bg-black/[0.02] border-black/[0.06]"
               }`}
             >
-              <span className="flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5 text-amber-500" />
-                <span>Week Streak</span>
+              <span>7-Day Streak</span>
+              <span className="text-[11px] opacity-75">
+                {user.streakDays >= 7 ? "Active" : "Set 7d"}
               </span>
-              <span className="text-[10px]">{user.streakDays >= 7 ? "✓ 7d Active" : "Set 7d"}</span>
             </button>
 
             <button
               id="test-bench-first-quest"
               onClick={handleTestFoundation}
-              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
+              className={`p-2.5 rounded-2xl border text-left flex items-center justify-between text-xs font-medium transition-colors ${
                 (user.completedQuestIds || []).length >= 1
-                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                   : isDark
-                  ? "bg-[#27272A] border-zinc-700 hover:border-indigo-400"
-                  : "bg-white border-[#1E1B18] hover:bg-[#EEF2FF]"
+                  ? "bg-white/[0.03] border-white/[0.08]"
+                  : "bg-black/[0.02] border-black/[0.06]"
               }`}
             >
-              <span className="flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5 text-indigo-500" />
-                <span>First Quest</span>
-              </span>
-              <span className="text-[10px]">
-                {(user.completedQuestIds || []).length >= 1 ? "✓ Unlocked" : "+ Complete"}
+              <span>First Quest</span>
+              <span className="text-[11px] opacity-75">
+                {(user.completedQuestIds || []).length >= 1 ? "Done" : "+1"}
               </span>
             </button>
 
             <button
               id="test-bench-neural-explorer"
               onClick={() => {
-                if (onCompleteFoundationQuest) {
-                  onCompleteFoundationQuest();
-                }
+                if (onCompleteFoundationQuest) onCompleteFoundationQuest();
               }}
-              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
-                (user.completedQuestIds || []).some(id => id.includes("neural") || id === "quest-3") || (user.completedQuestIds || []).length >= 2
-                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+              className={`p-2.5 rounded-2xl border text-left flex items-center justify-between text-xs font-medium transition-colors ${
+                (user.completedQuestIds || []).length >= 2
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                   : isDark
-                  ? "bg-[#27272A] border-zinc-700 hover:border-purple-400"
-                  : "bg-white border-[#1E1B18] hover:bg-[#EEF2FF]"
+                  ? "bg-white/[0.03] border-white/[0.08]"
+                  : "bg-black/[0.02] border-black/[0.06]"
               }`}
             >
-              <span className="flex items-center gap-1.5">
-                <Network className="w-3.5 h-3.5 text-purple-400" />
-                <span>Neural Explorer</span>
-              </span>
-              <span className="text-[10px]">
-                {(user.completedQuestIds || []).some(id => id.includes("neural") || id === "quest-3") || (user.completedQuestIds || []).length >= 2
-                  ? "✓ Active"
-                  : "Test Net"}
-              </span>
+              <span>Neural Explorer</span>
+              <span className="text-[11px] opacity-75">Test</span>
             </button>
 
             <button
               id="test-bench-streak-reset"
               onClick={() => handleTestStreak(4)}
-              className={`p-2 rounded-xl border text-left flex items-center justify-between font-mono text-[11px] font-bold transition-all active:scale-95 ${
+              className={`p-2.5 rounded-2xl border text-left flex items-center justify-between text-xs font-medium transition-colors ${
                 isDark
-                  ? "bg-[#27272A] border-zinc-700 hover:border-zinc-500"
-                  : "bg-white border-[#1E1B18] hover:bg-zinc-100"
+                  ? "bg-white/[0.03] border-white/[0.08]"
+                  : "bg-black/[0.02] border-black/[0.06]"
               }`}
             >
-              <span className="flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Reset to 4d</span>
-              </span>
-              <span className="text-[10px]">{user.streakDays}d</span>
+              <span>Set 4d Streak</span>
+              <span className="text-[11px] opacity-75">{user.streakDays}d</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Main Overall Progress Showcase Card */}
-      <div
-        className={`p-5 rounded-3xl space-y-4 transition-all ${
-          isNeumorphic
-            ? "neu-raised text-slate-800"
-            : isDark
-            ? "bg-[#27272A] border-2 border-[#3F3F46] text-zinc-100 shadow-xl"
-            : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[4px_4px_0px_#1E1B18]"
-        }`}
-      >
+      {/* Summary Card */}
+      <div className="apple-surface p-6 rounded-3xl space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div
-              className={`text-[10px] font-mono font-black uppercase tracking-widest ${
-                isNeumorphic ? "text-[#4F46E5]" : isDark ? "text-amber-400" : "text-[#4F46E5]"
+              className={`text-xs font-medium ${
+                isDark ? "text-[#2997FF]" : "text-[#0071E3]"
               }`}
             >
-              MASTER MILESTONES
+              Milestones
             </div>
-            <h1 className="text-2xl font-black uppercase tracking-tight">EARNED BADGES</h1>
-            <p className={`text-xs ${isNeumorphic ? "text-slate-500" : isDark ? "text-zinc-400" : "text-zinc-600"}`}>
-              Unlock permanent credentials by conquering daily streaks and stage curricula.
+            <h2 className="text-xl font-bold tracking-tight">Earned Badges</h2>
+            <p
+              className={`text-xs ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
+              }`}
+            >
+              Permanent credentials earned through streaks and mastery.
             </p>
           </div>
 
           <div
-            className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center shrink-0 ${
-              isNeumorphic
-                ? "neu-flat text-indigo-600"
-                : isDark
-                ? "bg-amber-500/10 border-2 border-amber-400/80 text-amber-400 shadow-lg"
-                : "bg-[#FEF08A] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
+            className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0 ${
+              isDark
+                ? "bg-[#2997FF]/15 text-[#2997FF]"
+                : "bg-[#0071E3]/10 text-[#0071E3]"
             }`}
           >
-            <Trophy className="w-7 h-7" />
-            <span className="text-[10px] font-mono font-black">{summary.percent}%</span>
+            <Trophy className="w-5 h-5" />
+            <span className="text-[11px] font-mono font-semibold tabular-nums mt-0.5">
+              {summary.percent}%
+            </span>
           </div>
         </div>
 
-        {/* Big Striped Progress Bar */}
-        <div className="space-y-1.5">
-          <div className={`flex items-center justify-between text-xs font-mono font-bold ${isNeumorphic ? "text-slate-600" : ""}`}>
-            <span>
-              {summary.earned} of {summary.total} Unlocked
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs tabular-nums">
+            <span className={isDark ? "text-zinc-300" : "text-[#424245]"}>
+              {summary.earned} of {summary.total} unlocked
             </span>
-            <span className={isNeumorphic ? "text-indigo-600 font-black" : ""}>{summary.percent}% Completed</span>
+            <span
+              className={`font-medium ${
+                isDark ? "text-zinc-400" : "text-[#6E6E73]"
+              }`}
+            >
+              {summary.percent}%
+            </span>
           </div>
-          <div
-            className={`w-full h-3.5 rounded-full overflow-hidden ${
-              isNeumorphic ? "neu-progress-track" : isDark ? "bg-[#18181B] border-2 border-[#3F3F46]" : "bg-zinc-100 border-2 border-[#1E1B18]"
-            }`}
-          >
+          <div className="w-full h-2 rounded-full overflow-hidden neu-progress-track">
             <div
               className={`h-full transition-all duration-500 rounded-full ${
-                isNeumorphic ? "neu-progress-fill" : isDark ? "bg-amber-400" : "bg-[#4F46E5]"
+                isDark ? "bg-[#2997FF]" : "bg-[#0071E3]"
               }`}
               style={{ width: `${summary.percent}%` }}
             />
           </div>
         </div>
 
-        {/* Milestone Quick Highlights (Streak & Foundations Status) */}
-        <div className="grid grid-cols-2 gap-2.5 pt-1">
-          {/* 7-Day Streak Status Card */}
-          <div
-            className={`p-3 rounded-2xl flex items-center gap-3 transition-all ${
-              isNeumorphic
-                ? "neu-flat text-slate-800"
-                : user.streakDays >= 7
-                ? isDark
-                  ? "bg-emerald-950/40 border border-emerald-500/40 text-emerald-200"
-                  : "bg-emerald-50 border-2 border-emerald-300 text-emerald-950"
-                : isDark
-                ? "bg-[#18181B] border border-zinc-700 text-zinc-300"
-                : "bg-zinc-50 border border-zinc-200 text-zinc-800"
-            }`}
-          >
+        {/* Highlights Row */}
+        <div
+          className={`pt-4 border-t grid grid-cols-2 gap-4 ${
+            isDark ? "border-white/[0.06]" : "border-black/[0.05]"
+          }`}
+        >
+          <div className="flex items-center gap-3">
             <div
               className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                isNeumorphic
-                  ? "neu-inset text-amber-500"
-                  : user.streakDays >= 7
-                  ? "bg-amber-500 text-zinc-950 border border-amber-600"
+                user.streakDays >= 7
+                  ? "bg-orange-500/15 text-orange-500"
                   : isDark
-                  ? "bg-zinc-800 text-zinc-400 border border-zinc-700"
-                  : "bg-white text-zinc-500 border border-zinc-300"
+                  ? "bg-white/[0.05] text-zinc-400"
+                  : "bg-black/[0.04] text-zinc-500"
               }`}
             >
-              <Flame className="w-5 h-5 fill-current" />
+              <Flame className="w-4 h-4 fill-current" />
             </div>
-            <div className="min-w-0">
-              <div className={`text-[10px] font-mono font-bold uppercase truncate ${isNeumorphic ? "text-slate-500" : ""}`}>
+            <div>
+              <div
+                className={`text-[11px] ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
                 7-Day Streak
               </div>
-              <div className="text-xs font-black">
-                {user.streakDays >= 7 ? "Achieved! ✓" : `${user.streakDays}/7 Days`}
+              <div className="text-xs font-semibold tabular-nums">
+                {user.streakDays >= 7 ? "Achieved" : `${user.streakDays}/7 Days`}
               </div>
             </div>
           </div>
 
-          {/* Foundation Quests Status Card */}
-          <div
-            className={`p-3 rounded-2xl flex items-center gap-3 transition-all ${
-              isNeumorphic
-                ? "neu-flat text-slate-800"
-                : user.completedQuestIds?.includes("quest-1")
-                ? isDark
-                  ? "bg-emerald-950/40 border border-emerald-500/40 text-emerald-200"
-                  : "bg-emerald-50 border-2 border-emerald-300 text-emerald-950"
-                : isDark
-                ? "bg-[#18181B] border border-zinc-700 text-zinc-300"
-                : "bg-zinc-50 border border-zinc-200 text-zinc-800"
-            }`}
-          >
+          <div className="flex items-center gap-3">
             <div
               className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                isNeumorphic
-                  ? "neu-inset text-indigo-600"
-                  : user.completedQuestIds?.includes("quest-1")
-                  ? "bg-indigo-600 text-white border border-indigo-700"
+                user.completedQuestIds?.includes("quest-1")
+                  ? "bg-[#0071E3]/15 text-[#0071E3]"
                   : isDark
-                  ? "bg-zinc-800 text-zinc-400 border border-zinc-700"
-                  : "bg-white text-zinc-500 border border-zinc-300"
+                  ? "bg-white/[0.05] text-zinc-400"
+                  : "bg-black/[0.04] text-zinc-500"
               }`}
             >
-              <Cpu className="w-5 h-5" />
+              <Cpu className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
-              <div className={`text-[10px] font-mono font-bold uppercase truncate ${isNeumorphic ? "text-slate-500" : ""}`}>
+            <div>
+              <div
+                className={`text-[11px] ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
                 Foundations
               </div>
-              <div className="text-xs font-black">
-                {user.completedQuestIds?.includes("quest-1") ? "Completed! ✓" : "In Progress"}
+              <div className="text-xs font-semibold">
+                {user.completedQuestIds?.includes("quest-1")
+                  ? "Completed"
+                  : "In Progress"}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Next Closest Milestone Banner */}
+      {/* Next Target */}
       {summary.nextMilestone && (
-        <div
+        <AppleSurfaceButton
           onClick={() => handleSelectBadge(summary.nextMilestone!)}
-          className={`p-3.5 rounded-2xl flex items-center justify-between cursor-pointer transition-all active:scale-[0.99] ${
-            isNeumorphic
-              ? "neu-raised text-slate-800"
-              : isDark
-              ? "bg-[#1C1917] border-2 border-amber-500/40 hover:border-amber-400 text-zinc-200"
-              : "bg-[#FFF9EA] border-2 border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18] hover:translate-y-0.5"
-          }`}
+          className="apple-surface w-full p-4 rounded-2xl flex items-center justify-between text-left hover:opacity-95 transition-opacity"
         >
           <div className="flex items-center gap-3 min-w-0">
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                isNeumorphic
-                  ? "neu-inset text-amber-500"
-                  : isDark
-                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
-                  : "bg-[#FEF08A] text-[#1E1B18] border border-[#1E1B18]"
+                isDark
+                  ? "bg-amber-500/15 text-amber-300"
+                  : "bg-amber-500/10 text-amber-600"
               }`}
             >
               {renderBadgeIcon(summary.nextMilestone.iconName, "w-5 h-5")}
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-black uppercase text-amber-500">
-                  NEXT TARGET
-                </span>
-                <span className="text-[10px] font-mono opacity-60">
-                  {summary.nextMilestone.progressPercent}%
-                </span>
+              <div className="text-xs font-semibold truncate">
+                Next · {summary.nextMilestone.title}
               </div>
-              <div className="text-xs font-black uppercase truncate">
-                {summary.nextMilestone.title}
-              </div>
-              <div className="text-[11px] opacity-75 truncate">
-                {summary.nextMilestone.currentValue} / {summary.nextMilestone.targetValue}{" "}
-                {summary.nextMilestone.unit}
+              <div
+                className={`text-xs truncate tabular-nums ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
+                {summary.nextMilestone.currentValue} /{" "}
+                {summary.nextMilestone.targetValue}{" "}
+                {summary.nextMilestone.unit} ({summary.nextMilestone.progressPercent}%)
               </div>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0 ml-2" />
-        </div>
+        </AppleSurfaceButton>
       )}
 
-      {/* Filter Tabs & Category Selector */}
-      <div className="space-y-2.5">
-        {/* Status Pills */}
-        <div className="flex items-center gap-2">
+      {/* Filters */}
+      <div className="space-y-3">
+        <div
+          className={`flex items-center p-1 rounded-full border ${
+            isDark
+              ? "bg-[#1C1C1E] border-white/[0.08]"
+              : "bg-black/[0.05] border-black/[0.04]"
+          }`}
+        >
           {(["all", "earned", "in-progress"] as const).map((status) => {
             const isActive = filterStatus === status;
             const count =
@@ -512,34 +443,34 @@ export const Achievements: React.FC<AchievementsProps> = ({
                   soundFx.playTap();
                   setFilterStatus(status);
                 }}
-                className={`flex-1 py-2 px-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider transition-all ${
+                className={`flex-1 py-1.5 px-3 rounded-full text-xs font-semibold transition-all tabular-nums whitespace-nowrap ${
                   isActive
-                    ? isNeumorphic
-                      ? "neu-btn-primary text-white"
-                      : isDark
-                      ? "bg-amber-400 border-2 border-amber-500 text-zinc-950 shadow-sm"
-                      : "bg-[#1E1B18] border-2 border-[#1E1B18] text-white shadow-[2px_2px_0px_#1E1B18]"
-                    : isNeumorphic
-                    ? "neu-flat text-slate-600 hover:text-slate-900"
+                    ? isDark
+                      ? "bg-[#2C2C2E] text-white shadow-xs"
+                      : "bg-white text-[#1D1D1F] shadow-xs"
                     : isDark
-                    ? "bg-[#27272A] border-2 border-[#3F3F46] text-zinc-400 hover:text-zinc-200"
-                    : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[1px_1px_0px_#1E1B18]"
+                    ? "text-zinc-400 hover:text-zinc-200"
+                    : "text-[#6E6E73] hover:text-[#1D1D1F]"
                 }`}
               >
-                {status === "all" ? "ALL" : status === "earned" ? "EARNED" : "LOCKED"} ({count})
+                {status === "all"
+                  ? "All"
+                  : status === "earned"
+                  ? "Earned"
+                  : "Locked"}{" "}
+                ({count})
               </button>
             );
           })}
         </div>
 
-        {/* Category Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {[
             { id: "all", label: "All Categories" },
-            { id: "streaks", label: "Streaks 🔥" },
-            { id: "curriculum", label: "Curriculum 📚" },
-            { id: "mastery", label: "Mastery ⚡" },
-            { id: "milestones", label: "Sparks & Level ✨" }
+            { id: "streaks", label: "Streaks" },
+            { id: "curriculum", label: "Curriculum" },
+            { id: "mastery", label: "Mastery" },
+            { id: "milestones", label: "Sparks & Level" },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -547,18 +478,12 @@ export const Achievements: React.FC<AchievementsProps> = ({
                 soundFx.playTap();
                 setSelectedCategory(cat.id);
               }}
-              className={`px-3 py-1 rounded-full text-[11px] font-mono font-bold whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 selectedCategory === cat.id
-                  ? isNeumorphic
-                    ? "neu-btn-primary text-white"
-                    : isDark
-                    ? "bg-zinc-100 text-zinc-900 border border-white"
-                    : "bg-[#1E1B18] text-white border border-[#1E1B18]"
-                  : isNeumorphic
-                  ? "neu-flat text-slate-600 hover:text-slate-900"
+                  ? "bg-[#0071E3] text-white"
                   : isDark
-                  ? "bg-[#18181B] text-zinc-400 border border-zinc-800 hover:border-zinc-700"
-                  : "bg-white text-zinc-600 border border-zinc-300 hover:border-[#1E1B18]"
+                  ? "bg-white/[0.06] text-zinc-300 hover:bg-white/[0.1]"
+                  : "bg-black/[0.04] text-[#6E6E73] hover:text-[#1D1D1F]"
               }`}
             >
               {cat.label}
@@ -568,310 +493,231 @@ export const Achievements: React.FC<AchievementsProps> = ({
       </div>
 
       {/* Badges Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {filteredBadges.map((badge) => {
           const isUnlocked = badge.isEarned;
 
           return (
-            <div
+            <AppleSurfaceButton
               key={badge.id}
               onClick={() => handleSelectBadge(badge)}
-              className={`p-4 rounded-2xl text-left space-y-3 cursor-pointer transition-all active:scale-[0.98] ${
-                isNeumorphic
-                  ? isUnlocked
-                    ? "neu-raised text-slate-800"
-                    : "neu-flat text-slate-500 opacity-80"
-                  : isUnlocked
-                  ? isDark
-                    ? "bg-[#27272A] border-2 border-amber-400/70 text-zinc-100 shadow-md hover:border-amber-400"
-                    : "bg-[#FFFDF9] border-2 border-[#1E1B18] text-[#1E1B18] shadow-[3px_3px_0px_#1E1B18] hover:translate-y-0.5"
-                  : isDark
-                  ? "bg-[#18181B] border-2 border-[#27272A] text-zinc-500 hover:border-zinc-700"
-                  : "bg-zinc-50/80 border-2 border-zinc-200 text-zinc-500 hover:border-zinc-400"
+              className={`apple-surface p-4 rounded-3xl text-left space-y-3 transition-opacity ${
+                isUnlocked ? "opacity-100" : "opacity-65 hover:opacity-90"
               }`}
             >
-              {/* Header: Rarity & Status */}
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-[9px] font-mono font-black px-2 py-0.5 rounded-full uppercase border ${getRarityBadgeStyle(
-                    badge.rarity
-                  )}`}
-                >
+              <div className="flex items-center justify-between text-[11px] font-medium">
+                <span className={`capitalize ${getRarityColor(badge.rarity)}`}>
                   {badge.rarity}
                 </span>
 
                 {isUnlocked ? (
-                  <span className="flex items-center gap-1 text-[10px] font-mono font-black text-emerald-500">
+                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                     <Check className="w-3.5 h-3.5" />
-                    <span>EARNED</span>
+                    <span>Earned</span>
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[10px] font-mono text-zinc-400">
+                  <span className="inline-flex items-center gap-1 text-zinc-400 tabular-nums">
                     <Lock className="w-3 h-3" />
                     <span>{badge.progressPercent}%</span>
                   </span>
                 )}
               </div>
 
-              {/* Icon & Title */}
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                    isNeumorphic
-                      ? isUnlocked
-                        ? "neu-flat text-indigo-600"
-                        : "neu-inset text-slate-400"
-                      : isUnlocked
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
+                    isUnlocked
                       ? isDark
-                        ? "bg-amber-500/20 text-amber-400 border-2 border-amber-400 shadow-sm"
-                        : "bg-[#FEF08A] text-[#1E1B18] border-2 border-[#1E1B18] shadow-[2px_2px_0px_#1E1B18]"
+                        ? "bg-[#2997FF]/15 text-[#2997FF]"
+                        : "bg-[#0071E3]/10 text-[#0071E3]"
                       : isDark
-                      ? "bg-zinc-800 text-zinc-600 border-2 border-zinc-700"
-                      : "bg-zinc-200 text-zinc-400 border-2 border-zinc-300"
+                      ? "bg-white/[0.05] text-zinc-500"
+                      : "bg-black/[0.04] text-zinc-400"
                   }`}
                 >
-                  {renderBadgeIcon(badge.iconName, "w-6 h-6")}
+                  {renderBadgeIcon(badge.iconName, "w-5 h-5")}
                 </div>
 
                 <div className="min-w-0">
-                  <h3
-                    className={`text-sm font-black uppercase tracking-tight truncate ${
-                      isUnlocked
-                        ? isNeumorphic
-                          ? "text-slate-800"
-                          : isDark
-                          ? "text-zinc-100"
-                          : "text-[#1E1B18]"
-                        : isNeumorphic
-                        ? "text-slate-500"
-                        : isDark
-                        ? "text-zinc-400"
-                        : "text-zinc-700"
-                    }`}
-                  >
+                  <h3 className="text-sm font-semibold truncate">
                     {badge.title}
                   </h3>
-                  <div className={`text-[11px] font-mono truncate ${isNeumorphic ? "text-slate-500" : "opacity-70"}`}>
+                  <div
+                    className={`text-xs truncate ${
+                      isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                    }`}
+                  >
                     {badge.milestoneGoal}
                   </div>
                 </div>
               </div>
 
-              {/* Description */}
               <p
                 className={`text-xs line-clamp-2 ${
-                  isUnlocked
-                    ? isNeumorphic
-                      ? "text-slate-600"
-                      : isDark
-                      ? "text-zinc-300"
-                      : "text-zinc-700"
-                    : isNeumorphic
-                    ? "text-slate-400"
-                    : isDark
-                    ? "text-zinc-500"
-                    : "text-zinc-500"
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
                 }`}
               >
                 {badge.description}
               </p>
 
-              {/* Progress Bar & Metric */}
-              <div className="space-y-1 pt-1">
-                <div className="flex items-center justify-between text-[11px] font-mono font-bold">
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between text-[11px] font-mono tabular-nums">
                   <span>
                     {badge.currentValue} / {badge.targetValue} {badge.unit}
                   </span>
-                  <span className={isNeumorphic ? "text-indigo-600" : "opacity-80"}>+{badge.xpBonus} XP</span>
+                  <span className={isDark ? "text-[#2997FF]" : "text-[#0071E3]"}>
+                    +{badge.xpBonus} XP
+                  </span>
                 </div>
-                <div
-                  className={`w-full h-2 rounded-full overflow-hidden ${
-                    isNeumorphic
-                      ? "neu-progress-track"
-                      : isDark
-                      ? "bg-zinc-800 border border-zinc-700"
-                      : "bg-zinc-200 border border-zinc-300"
-                  }`}
-                >
+                <div className="w-full h-1.5 rounded-full overflow-hidden neu-progress-track">
                   <div
-                    className={`h-full transition-all duration-300 ${
+                    className={`h-full transition-all duration-300 rounded-full ${
                       isUnlocked
-                        ? isNeumorphic ? "bg-emerald-500" : "bg-emerald-500"
-                        : isNeumorphic
-                        ? "neu-progress-fill"
+                        ? "bg-emerald-500"
                         : isDark
-                        ? "bg-amber-400/80"
-                        : "bg-[#4F46E5]"
+                        ? "bg-[#2997FF]"
+                        : "bg-[#0071E3]"
                     }`}
                     style={{ width: `${badge.progressPercent}%` }}
                   />
                 </div>
               </div>
-            </div>
+            </AppleSurfaceButton>
           );
         })}
       </div>
 
       {filteredBadges.length === 0 && (
-        <div
-          className={`p-8 rounded-3xl border-2 text-center space-y-2 ${
-            isDark ? "bg-[#18181B] border-zinc-800 text-zinc-400" : "bg-white border-zinc-200 text-zinc-500"
-          }`}
-        >
-          <Trophy className="w-8 h-8 mx-auto opacity-40" />
-          <p className="text-sm font-bold">No badges matching this filter.</p>
+        <div className="apple-surface p-8 rounded-3xl text-center space-y-2">
+          <Trophy className="w-7 h-7 mx-auto opacity-40" />
+          <p className="text-sm font-semibold">No matching badges</p>
           <button
             onClick={() => {
               setFilterStatus("all");
               setSelectedCategory("all");
             }}
-            className="text-xs font-mono font-black text-[#4F46E5] hover:underline uppercase"
+            className="text-xs font-medium text-[#0071E3] hover:underline"
           >
-            Clear Filters
+            Reset filters
           </button>
         </div>
       )}
 
       {/* Badge Detail Modal */}
       {selectedBadge && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div
-            className={`w-full max-w-sm rounded-3xl border-2 p-6 space-y-5 animate-in zoom-in-95 relative ${
-              isDark
-                ? "bg-[#27272A] border-amber-400/70 text-zinc-100 shadow-2xl"
-                : "bg-[#FFFDF9] border-[#1E1B18] text-[#1E1B18] shadow-[6px_6px_0px_#1E1B18]"
-            }`}
-          >
-            {/* Close Button */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+          <div className="apple-surface w-full max-w-sm rounded-3xl p-6 space-y-5 relative">
             <button
               onClick={() => {
                 soundFx.playTap();
                 setSelectedBadge(null);
               }}
-              className={`absolute top-4 right-4 p-1.5 rounded-full border transition-all ${
-                isDark
-                  ? "bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white"
-                  : "bg-zinc-100 border-[#1E1B18] text-[#1E1B18] hover:bg-zinc-200"
-              }`}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
             >
               <X className="w-4 h-4" />
             </button>
 
-            {/* Badge Medallion */}
-            <div className="text-center space-y-3 pt-2">
+            <div className="text-center space-y-2 pt-2">
               <div
-                className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center border-2 transition-transform hover:scale-105 ${
+                className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${
                   selectedBadge.isEarned
                     ? isDark
-                      ? "bg-amber-500/20 text-amber-400 border-amber-400 shadow-lg"
-                      : "bg-[#FEF08A] text-[#1E1B18] border-[#1E1B18] shadow-[3px_3px_0px_#1E1B18]"
+                      ? "bg-[#2997FF]/15 text-[#2997FF]"
+                      : "bg-[#0071E3]/10 text-[#0071E3]"
                     : isDark
-                    ? "bg-zinc-800 text-zinc-500 border-zinc-700"
-                    : "bg-zinc-100 text-zinc-400 border-zinc-300"
+                    ? "bg-white/[0.06] text-zinc-500"
+                    : "bg-black/[0.04] text-zinc-400"
                 }`}
               >
-                {renderBadgeIcon(selectedBadge.iconName, "w-10 h-10")}
+                {renderBadgeIcon(selectedBadge.iconName, "w-8 h-8")}
               </div>
 
-              <div>
-                <div className="flex items-center justify-center gap-2">
-                  <span
-                    className={`text-[9px] font-mono font-black px-2 py-0.5 rounded-full uppercase border ${getRarityBadgeStyle(
-                      selectedBadge.rarity
-                    )}`}
-                  >
-                    {selectedBadge.rarity}
-                  </span>
-                  <span
-                    className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border ${
-                      selectedBadge.isEarned
-                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                        : "bg-zinc-500/20 text-zinc-400 border-zinc-500/40"
-                    }`}
-                  >
-                    {selectedBadge.isEarned ? "UNLOCKED" : "LOCKED"}
-                  </span>
-                </div>
-
-                <h2 className="text-xl font-black uppercase tracking-tight mt-1.5">
-                  {selectedBadge.title}
-                </h2>
-                <div className="text-xs font-mono opacity-70">
-                  {selectedBadge.milestoneGoal}
-                </div>
+              <div className="text-xs font-medium capitalize text-[#0071E3] dark:text-[#2997FF]">
+                {selectedBadge.rarity} ·{" "}
+                {selectedBadge.isEarned ? "Unlocked" : "Locked"}
               </div>
+
+              <h2 className="text-lg font-bold tracking-tight">
+                {selectedBadge.title}
+              </h2>
+              <p
+                className={`text-xs ${
+                  isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                }`}
+              >
+                {selectedBadge.milestoneGoal}
+              </p>
             </div>
 
-            {/* Lore / Description */}
-            <div
-              className={`p-3.5 rounded-2xl border text-xs leading-relaxed ${
-                isDark ? "bg-[#18181B] border-zinc-700 text-zinc-300" : "bg-zinc-50 border-zinc-200 text-zinc-700"
+            <p
+              className={`apple-surface-muted p-3.5 rounded-2xl text-xs leading-relaxed ${
+                isDark ? "text-zinc-300" : "text-[#424245]"
               }`}
             >
               {selectedBadge.description}
-            </div>
+            </p>
 
-            {/* Progress Meter */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-mono font-bold">
-                <span>Current Progress</span>
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-center justify-between font-mono tabular-nums">
+                <span className={isDark ? "text-zinc-400" : "text-[#6E6E73]"}>
+                  Progress
+                </span>
                 <span>
-                  {selectedBadge.currentValue} / {selectedBadge.targetValue} {selectedBadge.unit} (
-                  {selectedBadge.progressPercent}%)
+                  {selectedBadge.currentValue} / {selectedBadge.targetValue}{" "}
+                  {selectedBadge.unit} ({selectedBadge.progressPercent}%)
                 </span>
               </div>
-              <div
-                className={`w-full h-3 rounded-full overflow-hidden border ${
-                  isDark ? "bg-zinc-800 border-zinc-700" : "bg-zinc-200 border-zinc-300"
-                }`}
-              >
+              <div className="w-full h-2 rounded-full overflow-hidden neu-progress-track">
                 <div
-                  className={`h-full transition-all duration-300 ${
-                    selectedBadge.isEarned
-                      ? "bg-emerald-500"
-                      : isDark
-                      ? "bg-amber-400"
-                      : "bg-[#4F46E5]"
+                  className={`h-full transition-all duration-300 rounded-full ${
+                    selectedBadge.isEarned ? "bg-emerald-500" : "bg-[#0071E3]"
                   }`}
                   style={{ width: `${selectedBadge.progressPercent}%` }}
                 />
               </div>
             </div>
 
-            {/* Tips or Unlocked Date */}
-            <div className="space-y-2 pt-1 border-t border-zinc-500/20 text-xs">
-              <div className="flex items-center justify-between font-mono">
-                <span className="opacity-70">XP Reward:</span>
-                <span className="font-bold text-amber-500">+{selectedBadge.xpBonus} XP</span>
+            <div
+              className={`pt-3 border-t space-y-2 text-xs ${
+                isDark ? "border-white/[0.08]" : "border-black/[0.06]"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={isDark ? "text-zinc-400" : "text-[#6E6E73]"}>
+                  Reward
+                </span>
+                <span className="font-mono font-semibold text-[#0071E3] dark:text-[#2997FF]">
+                  +{selectedBadge.xpBonus} XP
+                </span>
               </div>
-
               {selectedBadge.isEarned ? (
-                <div className="flex items-center justify-between font-mono">
-                  <span className="opacity-70">Unlocked On:</span>
-                  <span className="font-bold text-emerald-500">
-                    {selectedBadge.unlockedAt || "Verified Learner"}
+                <div className="flex items-center justify-between">
+                  <span className={isDark ? "text-zinc-400" : "text-[#6E6E73]"}>
+                    Status
+                  </span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                    {selectedBadge.unlockedAt || "Verified"}
                   </span>
                 </div>
               ) : (
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-400">
-                  <strong>How to Unlock:</strong> {selectedBadge.tips}
-                </div>
+                <p
+                  className={`text-xs ${
+                    isDark ? "text-zinc-400" : "text-[#6E6E73]"
+                  }`}
+                >
+                  Tip: {selectedBadge.tips}
+                </p>
               )}
             </div>
 
-            {/* Done / Action Button */}
             <button
               onClick={() => {
                 soundFx.playTap();
                 setSelectedBadge(null);
               }}
-              className={`w-full py-3 rounded-2xl border-2 font-black text-xs uppercase tracking-wider transition-all ${
-                isDark
-                  ? "bg-amber-400 border-amber-500 text-zinc-950 hover:bg-amber-300"
-                  : "bg-[#1E1B18] border-[#1E1B18] text-white shadow-[2px_2px_0px_#1E1B18] hover:translate-y-0.5"
-              }`}
+              className="w-full py-2.5 rounded-2xl font-semibold text-xs bg-[#0071E3] hover:bg-[#0077ED] text-white transition-colors"
             >
-              Close Badge Details
+              Done
             </button>
           </div>
         </div>
