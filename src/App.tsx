@@ -16,13 +16,11 @@ import { CoursePickerModal } from "./components/modals/CoursePickerModal";
 import { SparksModal } from "./components/modals/SparksModal";
 import { StreakModal } from "./components/modals/StreakModal";
 import { DailyGiftModal } from "./components/modals/DailyGiftModal";
-import { AuthStarterView } from "./components/auth/AuthStarterView";
+import { INITIAL_PROFILE } from "./data/gamification";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { audioManager, soundFx } from "./utils/sound";
 
 const GUEST_THEME_KEY = "neuroquest_guest_theme";
-// Temporary bypass to skip the login page while under repair (set to false to restore login gate)
-const TEMP_BYPASS_LOGIN = true;
 
 const TAB_INDICES: Record<string, number> = {
   home: 0,
@@ -66,9 +64,7 @@ export default function App() {
   const [courses] = useState<Course[]>(AVAILABLE_COURSES);
   const [activeCourse, setActiveCourse] = useState<Course>(AVAILABLE_COURSES[0]);
 
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [authReady, setAuthReady] = useState<boolean>(() => authService.isAuthReady());
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [user, setUser] = useState<UserProfile>(INITIAL_PROFILE);
   const [guestTheme, setGuestTheme] = useState<AppTheme>(() => {
     try {
       const saved = localStorage.getItem(GUEST_THEME_KEY) as AppTheme | null;
@@ -102,27 +98,24 @@ export default function App() {
     phase: "Learn",
   });
 
-  // Subscribe to real Firebase Authentication state changes
+  // Free-entry mode: hydrate saved local profile immediately and sync Firebase user if signed in
   useEffect(() => {
     let active = true;
 
+    dataStore.getUserProfile().then((localProfile) => {
+      if (active) {
+        setUser(localProfile);
+      }
+    });
+
     const unsubscribe = authService.onAuthStateChanged(async (authUser, ready) => {
       if (!active) return;
-      setAuthReady(ready);
       if (authUser) {
         setUser(authUser);
-        setIsLoggedIn(true);
       } else if (ready) {
-        if (TEMP_BYPASS_LOGIN) {
-          const guestProfile = await dataStore.getUserProfile();
-          if (!active) return;
+        const guestProfile = await dataStore.getUserProfile();
+        if (active) {
           setUser(guestProfile);
-          setIsLoggedIn(true);
-          setActiveQuest(null);
-        } else {
-          setUser(null);
-          setIsLoggedIn(false);
-          setActiveQuest(null);
         }
       }
     });
@@ -268,42 +261,14 @@ export default function App() {
     }
   };
 
-  const handleLoginSuccess = (authenticatedUser: UserProfile) => {
-    setUser(authenticatedUser);
-    setIsLoggedIn(true);
-    setAuthReady(true);
-    setCurrentTab("home");
-  };
-
   const handleLogOut = async () => {
     soundFx.playTap();
     await authService.signOut();
     setActiveQuest(null);
     setCurrentTab("home");
-    if (TEMP_BYPASS_LOGIN) {
-      const guestProfile = await dataStore.getUserProfile();
-      setUser(guestProfile);
-      setIsLoggedIn(true);
-    } else {
-      setUser(null);
-      setIsLoggedIn(false);
-    }
+    const guestProfile = await dataStore.getUserProfile();
+    setUser(guestProfile);
   };
-
-  if (!authReady) {
-    return (
-      <div
-        className={`min-h-screen ${
-          isDark ? "bg-[#0B0B0D] text-[#F5F5F7]" : "bg-[#F5F5F7] text-[#1D1D1F]"
-        } flex items-center justify-center text-sm font-medium`}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-4 h-4 rounded-full border-2 border-[#0071E3] border-t-transparent animate-spin" />
-          <span>Connecting to NeuroQuest...</span>
-        </div>
-      </div>
-    );
-  }
 
   // Unified calm Apple canvas palette across light/warm/dark themes
   let themeBg = "bg-[#F2F4F8] text-[#1D1D1F]";
@@ -349,39 +314,6 @@ export default function App() {
       />
     </div>
   );
-
-  // If not logged in and bypass is disabled, display the full Login Starter Page first
-  if (!TEMP_BYPASS_LOGIN && (!isLoggedIn || !user)) {
-    return (
-      <MotionConfig reducedMotion="user">
-        <div
-          className={`min-h-screen ${themeBg} font-sans selection:bg-[#0071E3]/15 selection:text-[#0071E3] transition-colors duration-500 relative overflow-x-hidden`}
-        >
-          {ambientBackdrop}
-          <div className="relative z-10 w-full min-h-screen flex flex-col justify-center">
-            <AuthStarterView
-              onLoginSuccess={handleLoginSuccess}
-              activeTheme={activeTheme}
-              onToggleTheme={handleToggleTheme}
-            />
-          </div>
-        </div>
-      </MotionConfig>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div
-        className={`min-h-screen ${themeBg} flex items-center justify-center text-sm font-medium`}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-4 h-4 rounded-full border-2 border-[#0071E3] border-t-transparent animate-spin" />
-          <span>Loading NeuroQuest...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <MotionConfig reducedMotion="user">
