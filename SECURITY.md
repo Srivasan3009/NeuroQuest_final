@@ -1,21 +1,15 @@
 # Security Policy
 
-## Supported Versions
+## Secret & Environment Handling
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+- All `.env` and `.env.*` files (except the secret-free `.env.example` template) are excluded via `.gitignore`.
+- `GEMINI_API_KEY` is read strictly on the server inside `server.ts` and is never exposed in `VITE_*` client environment variables or frontend bundles.
+- Client-side Firebase configuration (`firebase-applet-config.json`) contains only public project identifiers, while all user data and leaderboard writes are enforced server-side by `firestore.rules`.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Firestore Security Controls
+
+See `security_spec.md` and `firestore.rules` for full data invariants, identity isolation (`/users/{userId}`), verified email checks, and schema validation rules.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+If you discover a security issue in NeuroQuest AI Academy, please avoid opening a public issue with exploit details or credentials. Report it privately to the repository maintainer with reproduction steps and impact notes.

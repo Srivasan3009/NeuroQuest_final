@@ -1,6 +1,6 @@
 {
   "name": "NeuroQuest AI Academy",
-  "description": "Gamified interactive AI & Machine Learning learning OS with neural network visualizers, curriculum paths, real Supabase auth, and cadet ranking systems.",
+  "description": "Gamified interactive AI & Machine Learning learning OS with neural network visualizers, curriculum paths, Google Sign-In, and cloud-synced cadet ranking systems.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
