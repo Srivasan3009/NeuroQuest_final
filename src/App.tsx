@@ -21,6 +21,8 @@ import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import { audioManager, soundFx } from "./utils/sound";
 
 const GUEST_THEME_KEY = "neuroquest_guest_theme";
+// Temporary bypass to skip the login page while under repair (set to false to restore login gate)
+const TEMP_BYPASS_LOGIN = true;
 
 const TAB_INDICES: Record<string, number> = {
   home: 0,
@@ -102,19 +104,31 @@ export default function App() {
 
   // Subscribe to real Firebase Authentication state changes
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged((authUser, ready) => {
+    let active = true;
+
+    const unsubscribe = authService.onAuthStateChanged(async (authUser, ready) => {
+      if (!active) return;
       setAuthReady(ready);
       if (authUser) {
         setUser(authUser);
         setIsLoggedIn(true);
       } else if (ready) {
-        setUser(null);
-        setIsLoggedIn(false);
-        setActiveQuest(null);
+        if (TEMP_BYPASS_LOGIN) {
+          const guestProfile = await dataStore.getUserProfile();
+          if (!active) return;
+          setUser(guestProfile);
+          setIsLoggedIn(true);
+          setActiveQuest(null);
+        } else {
+          setUser(null);
+          setIsLoggedIn(false);
+          setActiveQuest(null);
+        }
       }
     });
 
     return () => {
+      active = false;
       unsubscribe();
     };
   }, []);
@@ -264,10 +278,16 @@ export default function App() {
   const handleLogOut = async () => {
     soundFx.playTap();
     await authService.signOut();
-    setUser(null);
-    setIsLoggedIn(false);
     setActiveQuest(null);
     setCurrentTab("home");
+    if (TEMP_BYPASS_LOGIN) {
+      const guestProfile = await dataStore.getUserProfile();
+      setUser(guestProfile);
+      setIsLoggedIn(true);
+    } else {
+      setUser(null);
+      setIsLoggedIn(false);
+    }
   };
 
   if (!authReady) {
@@ -330,8 +350,8 @@ export default function App() {
     </div>
   );
 
-  // If not logged in, display the full Login Starter Page first!
-  if (!isLoggedIn || !user) {
+  // If not logged in and bypass is disabled, display the full Login Starter Page first
+  if (!TEMP_BYPASS_LOGIN && (!isLoggedIn || !user)) {
     return (
       <MotionConfig reducedMotion="user">
         <div
@@ -347,6 +367,19 @@ export default function App() {
           </div>
         </div>
       </MotionConfig>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div
+        className={`min-h-screen ${themeBg} flex items-center justify-center text-sm font-medium`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-4 h-4 rounded-full border-2 border-[#0071E3] border-t-transparent animate-spin" />
+          <span>Loading NeuroQuest...</span>
+        </div>
+      </div>
     );
   }
 
