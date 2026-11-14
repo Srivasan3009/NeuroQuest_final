@@ -8,7 +8,7 @@ dist-ssr/
 *.local
 
 # Environment & secret files (never commit real secrets)
-.env
+.env.example
 .env.*
 *.env
 !.env.example
